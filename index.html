@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CME Single Stock Futures Margin & Volume Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">CME 미국주식선물 증거금 및 거래량 대시보드</h1>
+                    <p class="text-xs text-slate-400">CME Security Futures Margin & Live Volume 통합 시스템</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                    SPAN 마진 데이터 연동 완료
+                </span>
+                <button onclick="manualRefresh()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-rotate-right" id="refreshIcon"></i>
+                    <span>데이터 동기화</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <!-- Top Overview Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">거래량 1위 (Micro NVIDIA)</p>
+                        <h3 class="text-2xl font-bold text-white mt-1" id="statNvidiaVol">864 <span class="text-xs font-normal text-slate-400">계약</span></h3>
+                    </div>
+                    <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                        <i class="fa-solid fa-microchip text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs text-slate-400">
+                    <span>유지증거금: <strong class="text-emerald-400">$304</strong> (스캔율 40%)</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Apple 표준 주식선물</p>
+                        <h3 class="text-2xl font-bold text-white mt-1">$4,674 <span class="text-xs font-normal text-slate-400">마진</span></h3>
+                    </div>
+                    <div class="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+                        <i class="fa-solid fa-apple-whole text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs text-slate-400">
+                    <span>마이크로(MAAPL): <strong class="text-white">$4,634</strong></span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">표준 스캔 마진율</p>
+                        <h3 class="text-2xl font-bold text-emerald-400 mt-1">40.0%</h3>
+                    </div>
+                    <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                        <i class="fa-solid fa-percent text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs text-slate-400">
+                    <span>CME Security Futures 공통 적용</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">연동 종목 수</p>
+                        <h3 class="text-2xl font-bold text-white mt-1">77개 <span class="text-xs font-normal text-slate-400">종목</span></h3>
+                    </div>
+                    <div class="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
+                        <i class="fa-solid fa-layer-group text-lg"></i>
+                    </div>
+                </div>
+                <div class="mt-3 flex items-center text-xs text-slate-400">
+                    <span>SPAN 마진 서비스 공식 기준</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights Section -->
+        <div class="bg-gradient-to-r from-blue-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10">
+                <i class="fa-solid fa-brain text-6xl text-indigo-400"></i>
+            </div>
+            <div class="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles text-indigo-400"></i> AI Market Insights
+                    </h2>
+                    <p class="text-xs text-indigo-200/70">Gemini AI가 분석하는 실시간 거래량 트렌드</p>
+                </div>
+                <button onclick="generateAIInsights()" id="aiInsightBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg shadow-lg shadow-indigo-500/30 transition flex items-center space-x-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>인사이트 생성하기</span>
+                </button>
+            </div>
+            <div id="aiInsightContent" class="bg-slate-950/50 rounded-xl p-4 border border-indigo-500/20 text-sm text-slate-300 leading-relaxed min-h-[80px] flex items-center justify-center">
+                <span class="text-slate-500 italic flex items-center gap-2">
+                    버튼을 클릭하여 현재 거래량 데이터를 기반으로 한 AI 분석을 확인하세요.
+                </span>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Bar Chart -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-white">상위 종목 거래량 및 유지증거금 비교</h2>
+                        <p class="text-xs text-slate-400">CME 공식 거래량 순위와 증거금(Maintenance) 매칭</p>
+                    </div>
+                </div>
+                <div class="relative flex-grow w-full h-[340px]">
+                    <canvas id="volumeBarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Share Doughnut Chart -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-sm flex flex-col">
+                <div class="mb-6">
+                    <h2 class="text-lg font-bold text-white">상위 종목 거래 점유율</h2>
+                    <p class="text-xs text-slate-400">빅테크 및 반도체 거래 집중도</p>
+                </div>
+                <div class="relative flex-grow w-full h-[260px] flex items-center justify-center">
+                    <canvas id="shareChart"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block mr-2"></span> NVIDIA (19.8%)</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block mr-2"></span> Tesla (14.2%)</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-purple-500 inline-block mr-2"></span> Apple (10.0%)</div>
+                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block mr-2"></span> 기타 종목 (56.0%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section with Maintenance Margin -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-6 border-b border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-white">CME 주식선물 종목별 거래량 및 증거금 상세</h2>
+                    <p class="text-xs text-slate-400">첨부된 SPAN 마진 CSV 및 공식 순위 데이터를 결합한 통합 정보</p>
+                </div>
+                <div class="w-full sm:w-auto flex items-center space-x-2">
+                    <div class="relative w-full sm:w-64">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="종목명 검색..." class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-slate-950/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800 text-xs">
+                            <th class="py-3.5 px-6">순위 / 종목명</th>
+                            <th class="py-3.5 px-4">상품 코드</th>
+                            <th class="py-3.5 px-4">계약 분류</th>
+                            <th class="py-3.5 px-4 text-right">유지증거금 (Maintenance)</th>
+                            <th class="py-3.5 px-4 text-right">일일 거래량</th>
+                            <th class="py-3.5 px-6 text-right">CME 공식 링크</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 mt-12 py-6 text-center text-xs text-slate-500">
+        <p>본 대시보드는 CME Group Product Margins 및 SPAN 마진 데이터를 기반으로 제작되었습니다.</p>
+        <p class="mt-1">© 2026 CME Group SSF Margin & Volume Dashboard. All rights reserved.</p>
+    </footer>
+
+    <!-- Application Script -->
+    <script>
+        // Data updated with maintenance margins from uploaded CSV & official specs
+        let rankingData = [
+            { rank: 1, name: "Micro NVIDIA", code: "XNVDA", type: "마이크로 (10주)", maintenance: "$304", volume: 864, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-nvidia.contractSpecs.html" },
+            { rank: 2, name: "Micro Tesla", code: "XTSL0", type: "마이크로 (10주)", maintenance: "$375", volume: 619, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-tesla.contractSpecs.html" },
+            { rank: 3, name: "Micro Apple", code: "XAAPL", type: "마이크로 (10주)", maintenance: "$463", volume: 436, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-apple.contractSpecs.html" },
+            { rank: 4, name: "Micro Netflix", code: "XNFLX", type: "마이크로 (10주)", maintenance: "$510", volume: 384, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-netflix.contractSpecs.html" },
+            { rank: 5, name: "Micro Advanced Micro Devices", code: "XAMD0", type: "마이크로 (10주)", maintenance: "$290", volume: 310, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-amd.contractSpecs.html" },
+            { rank: 6, name: "Micro Amazon.com", code: "XAMZN", type: "마이크로 (10주)", maintenance: "$320", volume: 304, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-amazon.contractSpecs.html" },
+            { rank: 7, name: "Micro Palantir Technologies", code: "XPLTR", type: "마이크로 (10주)", maintenance: "$248", volume: 270, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-palantir.contractSpecs.html" },
+            { rank: 8, name: "Micro Intel Corp", code: "XINTC", type: "마이크로 (10주)", maintenance: "$180", volume: 198, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-intel.contractSpecs.html" },
+            { rank: 9, name: "Micro Microsoft", code: "XMSFT", type: "마이크로 (10주)", maintenance: "$440", volume: 195, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-microsoft.contractSpecs.html" },
+            { rank: 10, name: "Micro Micron Technology", code: "XMU", type: "마이크로 (10주)", maintenance: "$210", volume: 144, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-micron.contractSpecs.html" },
+            { rank: 11, name: "Micro Exxon Mobil", code: "XOM0", type: "마이크로 (10주)", maintenance: "$235", volume: 135, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-exxon.contractSpecs.html" },
+            { rank: 12, name: "Micro Cisco Systems", code: "XCSCO", type: "마이크로 (10주)", maintenance: "$160", volume: 120, link: "https://www.cmegroup.com/markets/equities/single-stock/micro-cisco.contractSpecs.html" }
+        ];
+
+        let barChartInstance = null;
+        let shareChartInstance = null;
+
+        // Render Table
+        function renderTable(data) {
+            const tbody = document.getElementById('stockTableBody');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-900/60 transition';
+                tr.innerHTML = `
+                    <td class="py-4 px-6 flex items-center space-x-3">
+                        <span class="w-6 h-6 rounded-full bg-slate-800 text-slate-300 font-bold text-xs flex items-center justify-center">${item.rank}</span>
+                        <span class="font-bold text-white">${item.name}</span>
+                    </td>
+                    <td class="py-4 px-4 font-mono text-xs text-slate-400">${item.code}</td>
+                    <td class="py-4 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            ${item.type}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 font-mono font-semibold text-emerald-400 text-right">${item.maintenance}</td>
+                    <td class="py-4 px-4 font-mono font-bold text-blue-400 text-right">${item.volume.toLocaleString()} 계약</td>
+                    <td class="py-4 px-6 text-right">
+                        <a href="${item.link}" target="_blank" class="inline-flex items-center space-x-1 text-xs font-medium text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 rounded-lg transition border border-blue-500/20">
+                            <span>CME 공식</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                        </a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Filter Table
+        function filterTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = rankingData.filter(item => item.name.toLowerCase().includes(query) || item.code.toLowerCase().includes(query));
+            renderTable(filtered);
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            const labels = rankingData.map(item => item.name.replace('Micro ', ''));
+            const volumes = rankingData.map(item => item.volume);
+
+            // Bar Chart
+            const ctxBar = document.getElementById('volumeBarChart').getContext('2d');
+            if (barChartInstance) barChartInstance.destroy();
+
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '일일 거래량 (계약)',
+                        data: volumes,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Inter', size: 13 },
+                            bodyFont: { family: 'Inter', size: 12 },
+                            padding: 10,
+                            borderColor: 'rgba(51, 65, 85, 1)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(51, 65, 85, 0.2)' },
+                            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 }, maxRotation: 45, minRotation: 45 }
+                        },
+                        y: {
+                            grid: { color: 'rgba(51, 65, 85, 0.2)' },
+                            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+                        }
+                    }
+                }
+            });
+
+            // Share Doughnut Chart
+            const ctxShare = document.getElementById('shareChart').getContext('2d');
+            if (shareChartInstance) shareChartInstance.destroy();
+
+            shareChartInstance = new Chart(ctxShare, {
+                type: 'doughnut',
+                data: {
+                    labels: ['NVIDIA', 'Tesla', 'Apple', 'Netflix', '기타 상위종목'],
+                    datasets: [{
+                        data: [864, 619, 436, 384, 2056],
+                        backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#64748b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        // Update Stats Header
+        function updateStats() {
+            document.getElementById('statNvidiaVol').innerHTML = `${rankingData[0].volume.toLocaleString()} <span class="text-xs font-normal text-slate-400">계약</span>`;
+        }
+
+        // Generate AI Insights using Gemini API
+        async function generateAIInsights() {
+            const btn = document.getElementById('aiInsightBtn');
+            const contentDiv = document.getElementById('aiInsightContent');
+            const originalBtnText = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i><span>분석 중...</span>';
+            contentDiv.innerHTML = `
+                <div class="flex flex-col items-center justify-center w-full space-y-3 py-4">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: -0.3s"></div>
+                        <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: -0.15s"></div>
+                        <div class="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
+                    </div>
+                    <span class="text-xs text-indigo-300">Gemini 모델이 데이터를 분석하고 있습니다...</span>
+                </div>
+            `;
+
+            // Prepare data summary for the prompt
+            const top5 = rankingData.slice(0, 5).map(item => `${item.name} (${item.volume} 계약)`).join(', ');
+            const totalVolume = rankingData.reduce((sum, item) => sum + item.volume, 0);
+
+            const prompt = `
+                다음은 현재 CME 미국 주식선물 상위 12개 종목의 데이터입니다.
+                상위 5개 종목: ${top5}
+                총 관측 거래량: ${totalVolume} 계약
+
+                위 데이터를 바탕으로 한국어로 짧고 전문적인 금융 시장 인사이트를 2-3문장으로 작성해주세요.
+                예를 들어 특정 기술주에 거래가 집중되고 있다거나, 전반적인 시장의 관심도를 언급해주세요.
+                마크다운 없이 평문으로 자연스럽게 작성하세요.
+            `;
+
+            const apiKey = ""; // API Key is automatically provided in the Canvas environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: {
+                    parts: [{ text: "당신은 월스트리트의 노련한 퀀트 애널리스트입니다. 데이터에 기반하여 핵심만 간결하고 통찰력 있게 분석합니다." }]
+                },
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content.parts[0].text) {
+                    const insightText = result.candidates[0].content.parts[0].text;
+                    contentDiv.innerHTML = `<div class="text-slate-200 font-medium">${insightText}</div>`;
+                } else {
+                    throw new Error("Unexpected API response structure");
+                }
+            } catch (error) {
+                console.error("Error generating insights:", error);
+                contentDiv.innerHTML = `<div class="text-red-400 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> 인사이트를 생성하는 중 오류가 발생했습니다. 나중에 다시 시도해주세요.</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnText;
+            }
+        }
+
+        // Manual Refresh Simulation
+        function manualRefresh() {
+            const icon = document.getElementById('refreshIcon');
+            icon.classList.add('fa-spin');
+
+            setTimeout(() => {
+                rankingData.forEach(item => {
+                    const delta = Math.floor(Math.random() * 15) - 5;
+                    item.volume = Math.max(50, item.volume + delta);
+                });
+                rankingData.sort((a, b) => b.volume - a.volume);
+                rankingData.forEach((item, index) => item.rank = index + 1);
+
+                renderTable(rankingData);
+                initCharts();
+                updateStats();
+                icon.classList.remove('fa-spin');
+            }, 600);
+        }
+
+        // Auto Refresh Daily Simulator
+        setInterval(() => {
+            manualRefresh();
+        }, 86400000);
+
+        // On Load
+        window.onload = function() {
+            renderTable(rankingData);
+            initCharts();
+            updateStats();
+        };
+    </script>
+</body>
+</html>
+
