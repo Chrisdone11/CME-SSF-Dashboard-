@@ -2,24 +2,51 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>헬스 운동 기록 및 타이머 앱</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- React & ReactDOM CDN -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Babel CDN (JSX 해석용) -->
+
+  <!-- Babel CDN -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    /* Custom Scrollbar for Dark Theme */
+    /* Mobile Viewport & Scrollbar Customization */
+    html, body {
+      height: 100dvh;
+      min-height: -webkit-fill-available;
+      background-color: #121212;
+      color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      touch-action: pan-y;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #root {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Safe Area Padding for iOS / Modern Android Mobile Browsers */
+    .pb-safe {
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+    .bottom-bar-safe {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -31,12 +58,9 @@
       background: #333333;
       border-radius: 2px;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #555555;
-    }
   </style>
 </head>
-<body class="bg-[#121212] text-gray-100 font-sans select-none overflow-hidden m-0 p-0">
+<body class="bg-[#121212] text-gray-100 font-sans select-none overflow-hidden">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -51,18 +75,20 @@
       useEffect(() => {
         if (ref.current) {
           ref.current.innerHTML = `<i data-lucide="${name}" class="${className}"></i>`;
-          lucide.createIcons({
-            attrs: { class: className },
-            nameAttr: 'data-lucide'
-          });
+          if (window.lucide) {
+            window.lucide.createIcons({
+              attrs: { class: className },
+              nameAttr: 'data-lucide'
+            });
+          }
         }
       }, [name, className]);
 
-      return <span ref={ref} className="inline-flex items-center justify-center" {...props} />;
+      return <span ref={ref} className="inline-flex items-center justify-center pointer-events-none" {...props} />;
     };
 
     // ============================================================================
-    // 초성 검색 유틸리티
+    // 초성 검색 유틸리티 (한글 검색)
     // ============================================================================
     const CHOSUNG_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
 
@@ -234,6 +260,7 @@
       const [activeSession, setActiveSession] = useState(null);
       const [currentExIndex, setCurrentExIndex] = useState(0);
 
+      // 타이머 상태 관리
       const [timerActive, setTimerActive] = useState(false);
       const [timerTotal, setTimerTotal] = useState(60);
       const [timerRemaining, setTimerRemaining] = useState(60);
@@ -274,7 +301,12 @@
       const addTimerSeconds = (sec) => {
         if (!timerActive) return;
         timerEndTimeRef.current += sec * 1000;
-        setTimerTotal(prev => prev + sec);
+        const newTotal = Math.max(1, timerTotal + sec);
+        setTimerTotal(newTotal);
+        
+        const remainingMs = timerEndTimeRef.current - Date.now();
+        const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+        setTimerRemaining(remainingSec);
       };
 
       const handleToggleSetComplete = (exIdx, setIdx) => {
@@ -346,7 +378,7 @@
       };
 
       return (
-        <div className="flex flex-col h-screen w-full bg-[#121212] text-gray-100 font-sans select-none overflow-hidden">
+        <div className="flex flex-col h-full w-full bg-[#121212] text-gray-100 font-sans overflow-hidden">
           {currentView === 'calendar' && (
             <CalendarView 
               selectedDate={selectedDate}
@@ -402,8 +434,12 @@
     // 화면 1: 캘린더 메인 화면
     // ============================================================================
     function CalendarView({ selectedDate, setSelectedDate, workoutLogs, onOpenExerciseSelect, onOpenWorkoutDetail }) {
-      const [currentMonth, setCurrentMonth] = useState('2026.08');
+      const [currentYearMonth, setCurrentYearMonth] = useState({ year: 2026, month: 8 });
+      const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
 
+      const formattedMonthStr = `${currentYearMonth.year}.${String(currentYearMonth.month).padStart(2, '0')}`;
+
+      // 주차 통계 데이터
       const weeksData = [
         { weekNum: '30주', time: '5.2h', sets: '150s' },
         { weekNum: '31주', time: '5.2h', sets: '145s' },
@@ -413,75 +449,99 @@
         { weekNum: '35주', time: '0.9h', sets: '9s' },
       ];
 
-      const daysInMonth = [
-        { day: 26, isPrev: true }, { day: 27, date: '2026-08-27' }, { day: 28, date: '2026-08-28' }, { day: 29, date: '2026-08-29' }, { day: 30, date: '2026-08-30' }, { day: 31, date: '2026-08-31' }, { day: 1, isNext: true },
-        { day: 2, isPrev: false }, { day: 3 }, { day: 4 }, { day: 5 }, { day: 6 }, { day: 7 }, { day: 8, isNext: true },
-        { day: 9, isPrev: false }, { day: 10 }, { day: 11 }, { day: 12 }, { day: 13 }, { day: 14 }, { day: 15, isNext: true },
-        { day: 16, isPrev: false }, { day: 17 }, { day: 18 }, { day: 19 }, { day: 20 }, { day: 21 }, { day: 22, isNext: true },
-        { day: 23, isPrev: false }, { day: 24, date: '2026-08-24' }, { day: 25 }, { day: 26 }, { day: 27 }, { day: 28, date: '2026-08-28_today' }, { day: 29, isNext: true },
-        { day: 30, isPrev: false }, { day: 31 }, { day: 1, isNext: true }, { day: 2, isNext: true }, { day: 3, isNext: true }, { day: 4, isNext: true }, { day: 5, isNext: true }
-      ];
+      // 선택된 년/월 기반으로 달력 그리드 일수 생성
+      const calendarDays = useMemo(() => {
+        const { year, month } = currentYearMonth;
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const daysInMonth = new Date(year, month, 0).getDate();
+        const daysInPrevMonth = new Date(year, month - 1, 0).getDate();
+
+        const days = [];
+
+        // 이전 달 날짜
+        for (let i = firstDay - 1; i >= 0; i--) {
+          days.push({ day: daysInPrevMonth - i, isPrev: true });
+        }
+
+        // 현재 달 날짜
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          days.push({ day: d, date: dateStr, isCurrentMonth: true });
+        }
+
+        // 다음 달 날짜 채우기 (42칸 그리드)
+        const remaining = 42 - days.length;
+        for (let n = 1; n <= remaining; n++) {
+          days.push({ day: n, isNext: true });
+        }
+
+        return days;
+      }, [currentYearMonth]);
 
       const selectedDayLog = workoutLogs[selectedDate];
 
       return (
-        <div className="flex flex-col h-full bg-[#121212]">
-          <div className="flex items-center justify-between px-4 py-3 bg-[#1E1E1E] border-b border-gray-800">
+        <div className="flex flex-col h-full bg-[#121212] overflow-hidden">
+          {/* 상단 네비게이션 헤더 */}
+          <div className="flex items-center justify-between px-4 py-3 bg-[#1E1E1E] border-b border-gray-800 flex-shrink-0">
             <button className="p-1 text-gray-400 hover:text-white"><Icon name="layers" /></button>
-            <div className="flex items-center space-x-2">
-              <span className="text-xl font-bold tracking-tight">{currentMonth}</span>
+            
+            {/* 연/월 선택 버튼 (클릭 시 모달 열림) */}
+            <button 
+              onClick={() => setIsMonthPickerOpen(true)}
+              className="flex items-center space-x-2 bg-[#282828] hover:bg-[#333333] px-3 py-1.5 rounded-lg border border-gray-700 transition-colors"
+            >
+              <Icon name="calendar" className="w-4 h-4 text-blue-400" />
+              <span className="text-base font-bold tracking-tight text-white">{formattedMonthStr}</span>
               <Icon name="chevron-down" className="w-4 h-4 text-gray-400" />
-            </div>
+            </button>
+
             <div className="flex items-center space-x-3 text-gray-300">
-              <button className="p-1"><Icon name="calendar" /></button>
-              <button className="p-1"><Icon name="award" /></button>
-              <button className="p-1"><Icon name="more-vertical" /></button>
+              <button onClick={() => setIsMonthPickerOpen(true)} className="p-1 hover:text-white"><Icon name="calendar" /></button>
+              <button className="p-1 hover:text-white"><Icon name="award" /></button>
+              <button className="p-1 hover:text-white"><Icon name="more-vertical" /></button>
             </div>
           </div>
 
+          {/* 메인 캘린더 레이아웃 */}
           <div className="flex-1 flex overflow-hidden">
-            <div className="w-16 bg-[#181818] border-r border-gray-800/60 flex flex-col pt-2 text-xs text-gray-400">
+            {/* 좌측 주차 통계 사이드바 */}
+            <div className="w-14 bg-[#181818] border-r border-gray-800/60 flex flex-col pt-1 text-xs text-gray-400 flex-shrink-0">
               {weeksData.map((week, idx) => (
-                <div key={idx} className="flex-1 flex flex-col justify-center items-center px-1 border-b border-gray-800/40">
-                  <span className="font-semibold text-gray-300">{week.weekNum}</span>
-                  <span className="text-[10px] text-gray-500">{week.time}</span>
-                  <span className="text-[10px] text-blue-400">{week.sets}</span>
+                <div key={idx} className="flex-1 flex flex-col justify-center items-center px-0.5 border-b border-gray-800/40">
+                  <span className="font-semibold text-gray-300 text-[11px]">{week.weekNum}</span>
+                  <span className="text-[9px] text-gray-500">{week.time}</span>
+                  <span className="text-[9px] text-blue-400">{week.sets}</span>
                 </div>
               ))}
             </div>
 
+            {/* 달력 그리드 */}
             <div className="flex-1 grid grid-cols-7 grid-rows-6 gap-[1px] bg-gray-800/40 overflow-y-auto">
-              {daysInMonth.map((item, idx) => {
-                const dateStr = item.date ? item.date.replace('_today', '') : `2026-08-${String(item.day).padStart(2, '0')}`;
-                const log = workoutLogs[dateStr];
+              {calendarDays.map((item, idx) => {
+                const dateStr = item.date;
+                const log = dateStr ? workoutLogs[dateStr] : null;
                 const isSelected = selectedDate === dateStr;
-                const isToday = item.date?.includes('today');
 
                 return (
                   <div
                     key={idx}
-                    onClick={() => setSelectedDate(dateStr)}
-                    className={`p-1 flex flex-col justify-between cursor-pointer transition-colors relative ${
-                      item.isPrev || item.isNext ? 'bg-[#141414] text-gray-600' : 'bg-[#1A1A1A] text-gray-300'
+                    onClick={() => dateStr && setSelectedDate(dateStr)}
+                    className={`p-1 flex flex-col justify-between cursor-pointer transition-colors relative min-h-[55px] ${
+                      !item.isCurrentMonth ? 'bg-[#141414] text-gray-600' : 'bg-[#1A1A1A] text-gray-300'
                     } ${isSelected ? 'ring-2 ring-blue-500 bg-[#222834]' : 'hover:bg-[#222222]'}`}
                   >
                     <div className="flex justify-between items-center">
-                      <span className={`text-xs font-semibold ${isToday ? 'bg-blue-600 text-white px-1.5 py-0.5 rounded-full text-[10px]' : ''}`}>
+                      <span className={`text-xs font-semibold ${item.isCurrentMonth ? 'text-gray-200' : 'text-gray-600'}`}>
                         {item.day}
                       </span>
                       {log && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>}
                     </div>
 
                     {log && (
-                      <div className="mt-1 bg-[#252A36] border border-blue-900/40 rounded p-1 text-[10px] space-y-0.5 leading-tight">
+                      <div className="mt-0.5 bg-[#252A36] border border-blue-900/40 rounded p-1 text-[9px] space-y-0.5 leading-tight overflow-hidden">
                         <div className="text-blue-300 font-medium">{log.durationMinutes}분</div>
                         <div className="text-gray-400">{log.totalSets}세트</div>
-                        {Object.entries(log.breakdown).slice(0, 2).map(([part, sets]) => (
-                          <div key={part} className="text-[9px] text-gray-300 flex justify-between">
-                            <span>{part}</span>
-                            <span className="text-blue-400 font-mono">{sets}</span>
-                          </div>
-                        ))}
                       </div>
                     )}
                   </div>
@@ -490,30 +550,83 @@
             </div>
           </div>
 
-          <div className="bg-[#1E1E1E] border-t border-gray-800 p-3 flex items-center justify-between">
+          {/* 하단 컨트롤 바 (모바일 안전 영역 대응 pb-safe) */}
+          <div className="bg-[#1E1E1E] border-t border-gray-800 p-3 bottom-bar-safe flex items-center justify-between flex-shrink-0 z-10">
             <div className="flex items-center space-x-2">
               <div>
-                <div className="text-sm font-bold">{selectedDate} <span className="text-xs text-blue-400 font-normal">선택됨</span></div>
-                <div className="text-xs text-gray-400">{selectedDayLog ? `${selectedDayLog.totalSets}세트 운동 완수` : '운동 기록 없음'}</div>
+                <div className="text-sm font-bold text-gray-100">{selectedDate}</div>
+                <div className="text-xs text-gray-400">{selectedDayLog ? `${selectedDayLog.totalSets}세트 완료` : '등록된 운동 없음'}</div>
               </div>
             </div>
 
             <div className="flex space-x-2">
               <button 
-                onClick={() => setSelectedDate('2026-08-28')} 
-                className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-semibold rounded-lg"
+                onClick={() => {
+                  setSelectedDate('2026-08-28');
+                  setCurrentYearMonth({ year: 2026, month: 8 });
+                }} 
+                className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200 rounded-lg active:scale-95 transition-transform"
               >
                 오늘
               </button>
               <button 
                 onClick={() => onOpenWorkoutDetail(selectedDate)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white rounded-lg flex items-center space-x-1"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white rounded-lg flex items-center space-x-1 shadow-md active:scale-95 transition-transform"
               >
                 <span>{selectedDayLog ? '기록 보기' : '운동 추가'}</span>
                 <Icon name="arrow-right" className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
+
+          {/* 월 선택 모달 팝업 */}
+          {isMonthPickerOpen && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+              <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-xs p-4 space-y-4 shadow-2xl">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <h3 className="font-bold text-base text-gray-100">연 / 월 선택</h3>
+                  <button onClick={() => setIsMonthPickerOpen(false)} className="p-1 text-gray-400 hover:text-white">
+                    <Icon name="x" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">연도 (Year)</label>
+                    <select 
+                      value={currentYearMonth.year}
+                      onChange={(e) => setCurrentYearMonth({ ...currentYearMonth, year: Number(e.target.value) })}
+                      className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    >
+                      {[2024, 2025, 2026, 2027].map(y => (
+                        <option key={y} value={y}>{y}년</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">월 (Month)</label>
+                    <select 
+                      value={currentYearMonth.month}
+                      onChange={(e) => setCurrentYearMonth({ ...currentYearMonth, month: Number(e.target.value) })}
+                      className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                        <option key={m} value={m}>{m}월</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setIsMonthPickerOpen(false)}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-colors"
+                >
+                  확인 및 적용
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -544,8 +657,9 @@
       };
 
       return (
-        <div className="flex flex-col h-full bg-[#121212] relative">
-          <div className="p-3 bg-[#1E1E1E] border-b border-gray-800 flex items-center space-x-3">
+        <div className="flex flex-col h-full bg-[#121212] relative overflow-hidden">
+          {/* 상단 검색 바 */}
+          <div className="p-3 bg-[#1E1E1E] border-b border-gray-800 flex items-center space-x-3 flex-shrink-0">
             <button onClick={onBack} className="p-1 text-gray-400 hover:text-white">
               <Icon name="chevron-left" className="w-6 h-6" />
             </button>
@@ -566,7 +680,8 @@
             <button className="p-1 text-blue-400"><Icon name="plus" className="w-6 h-6" /></button>
           </div>
 
-          <div className="flex border-b border-gray-800 bg-[#1A1A1A] text-xs font-semibold overflow-x-auto">
+          {/* 카테고리 탭 */}
+          <div className="flex border-b border-gray-800 bg-[#1A1A1A] text-xs font-semibold overflow-x-auto flex-shrink-0">
             {['분류', '전체', '최근 30일', '즐겨찾기', '커스텀'].map((tab) => (
               <button
                 key={tab}
@@ -583,6 +698,7 @@
             ))}
           </div>
 
+          {/* 메인 목록 */}
           <div className="flex-1 overflow-y-auto p-3">
             {activeTab === '분류' && !selectedPart && !searchQuery && (
               <div className="space-y-4">
@@ -596,7 +712,7 @@
                     <div
                       key={part.id}
                       onClick={() => setSelectedPart(part)}
-                      className="bg-[#1E1E1E] hover:bg-[#252525] border border-gray-800 rounded-xl p-3 flex items-center justify-between cursor-pointer transition-all"
+                      className="bg-[#1E1E1E] hover:bg-[#252525] border border-gray-800 rounded-xl p-3 flex items-center justify-between cursor-pointer transition-all active:scale-98"
                     >
                       <div className="flex items-center space-x-3">
                         <span className="text-2xl">{part.icon}</span>
@@ -659,20 +775,20 @@
             )}
           </div>
 
-          <div className="bg-[#1E1E1E] border-t border-gray-800 p-3 space-y-3">
+          {/* 하단 대기열 Drawer (bottom-bar-safe 하단 영역 안전 보장) */}
+          <div className="bg-[#1E1E1E] border-t border-gray-800 p-3 bottom-bar-safe space-y-3 flex-shrink-0">
             <div className="flex items-center justify-between text-xs px-1">
               <div className="flex items-center space-x-1.5 text-gray-300 font-bold">
                 <Icon name="layers" className="w-4 h-4 text-blue-400" />
                 <span>선택된 운동 ({stagedExercises.length})</span>
               </div>
-              <button className="text-blue-400 hover:underline text-[11px]">슈퍼세트 설정</button>
             </div>
 
             <div className="flex space-x-2 overflow-x-auto pb-1">
               {stagedExercises.map((ex, index) => (
                 <div 
                   key={ex.id}
-                  className="min-w-[130px] bg-[#282828] border border-gray-700/60 rounded-lg p-2 relative flex flex-col justify-between"
+                  className="min-w-[120px] bg-[#282828] border border-gray-700/60 rounded-lg p-2 relative flex flex-col justify-between"
                 >
                   <button 
                     onClick={() => setStagedExercises(stagedExercises.filter(item => item.id !== ex.id))}
@@ -690,7 +806,7 @@
             <button
               onClick={onComplete}
               disabled={stagedExercises.length === 0}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white text-sm font-bold rounded-xl transition-colors shadow-lg"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white text-sm font-bold rounded-xl transition-colors shadow-lg active:scale-98"
             >
               선택 완료 ({stagedExercises.length}개 운동)
             </button>
@@ -700,7 +816,7 @@
     }
 
     // ============================================================================
-    // 화면 3: 운동 디테일 기록 및 휴식 타이머
+    // 화면 3: 운동 디테일 기록 및 휴식 타이머 (스와이프 제스처 & -30s 기능 포함)
     // ============================================================================
     function WorkoutDetailView({
       activeSession,
@@ -720,6 +836,30 @@
       addTimerSeconds
     }) {
       const currentEx = activeSession.exercises[currentExIndex];
+      const touchStartXRef = useRef(null);
+
+      // 터치 스와이프 감지 핸들러
+      const handleTouchStart = (e) => {
+        touchStartXRef.current = e.touches[0].clientX;
+      };
+
+      const handleTouchEnd = (e) => {
+        if (touchStartXRef.current === null) return;
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchStartXRef.current - touchEndX;
+
+        // 최소 50px 이상 스와이프 시 운동 전환
+        if (Math.abs(diffX) > 50) {
+          if (diffX > 0 && currentExIndex < activeSession.exercises.length - 1) {
+            // 왼쪽 스와이프 -> 다음 운동
+            setCurrentExIndex(prev => prev + 1);
+          } else if (diffX < 0 && currentExIndex > 0) {
+            // 오른쪽 스와이프 -> 이전 운동
+            setCurrentExIndex(prev => prev - 1);
+          }
+        }
+        touchStartXRef.current = null;
+      };
 
       const totalVolume = useMemo(() => {
         if (!currentEx) return 0;
@@ -741,7 +881,8 @@
 
       return (
         <div className="flex flex-col h-full bg-[#121212] relative overflow-hidden">
-          <div className="p-3 bg-[#1E1E1E] border-b border-gray-800 flex items-center justify-between">
+          {/* 상단 네비게이션 */}
+          <div className="p-3 bg-[#1E1E1E] border-b border-gray-800 flex items-center justify-between flex-shrink-0">
             <button onClick={onBack} className="p-1 text-gray-400 hover:text-white">
               <Icon name="chevron-left" className="w-6 h-6" />
             </button>
@@ -749,7 +890,8 @@
             <button onClick={onBack} className="p-1 text-blue-400 font-bold text-sm">완료</button>
           </div>
 
-          <div className="flex justify-center items-center space-x-2 py-2 bg-[#1A1A1A] border-b border-gray-800">
+          {/* 상단 인디케이터 도트 */}
+          <div className="flex justify-center items-center space-x-2 py-2 bg-[#1A1A1A] border-b border-gray-800 flex-shrink-0">
             {activeSession.exercises.map((ex, idx) => {
               const allCompleted = ex.sets.every(s => s.completed);
               return (
@@ -766,7 +908,18 @@
             })}
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
+          {/* 메인 운동 카드 스와이프 영역 */}
+          <div 
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            className="flex-1 overflow-y-auto p-4 space-y-4 pb-32"
+          >
+            {/* 스와이프 안내 힌트 바 */}
+            <div className="flex justify-between items-center text-[11px] text-gray-500 border-b border-gray-800/60 pb-1">
+              <span>👈 좌우로 스와이프하여 운동 이동</span>
+              <span>{currentExIndex + 1} / {activeSession.exercises.length}</span>
+            </div>
+
             <div>
               <div className="flex justify-between items-start">
                 <h2 className="text-xl font-extrabold text-white">{currentEx.name}</h2>
@@ -789,6 +942,7 @@
               </div>
             </div>
 
+            {/* 세트 입력 테이블 */}
             <div className="space-y-2">
               {currentEx.sets.map((set, setIdx) => (
                 <div 
@@ -850,7 +1004,8 @@
             </button>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-gray-800 p-3 shadow-2xl">
+          {/* 하단 휴식 타이머 바 (-30s / +30s 조절 기능 포함) */}
+          <div className="absolute bottom-0 left-0 right-0 bg-[#1E1E1E] border-t border-gray-800 p-3 bottom-bar-safe shadow-2xl z-20">
             <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden mb-2">
               <div 
                 className="bg-blue-500 h-full transition-all duration-300 ease-linear"
@@ -869,7 +1024,7 @@
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1.5">
                 <button 
                   onClick={() => setIsMuted(!isMuted)}
                   className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300"
@@ -877,9 +1032,18 @@
                   <Icon name={isMuted ? "volume-x" : "volume-2"} className={`w-4 h-4 ${isMuted ? 'text-red-400' : 'text-blue-400'}`} />
                 </button>
 
+                {/* -30s 시간 감소 버튼 */}
+                <button 
+                  onClick={() => addTimerSeconds(-30)}
+                  className="px-2.5 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-bold text-red-400 rounded-lg active:scale-95 transition-transform"
+                >
+                  -30s
+                </button>
+
+                {/* +30s 시간 증가 버튼 */}
                 <button 
                   onClick={() => addTimerSeconds(30)}
-                  className="px-2.5 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-bold text-gray-200 rounded-lg"
+                  className="px-2.5 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-bold text-blue-400 rounded-lg active:scale-95 transition-transform"
                 >
                   +30s
                 </button>
@@ -889,7 +1053,7 @@
                     if (timerActive) stopTimer();
                     else startTimer(60);
                   }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg flex items-center space-x-1 shadow-md"
+                  className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg flex items-center space-x-1 shadow-md active:scale-95 transition-transform"
                 >
                   <Icon name={timerActive ? "pause" : "play"} className="w-4 h-4" />
                   <span>{timerActive ? '일시정지' : '시작'}</span>
@@ -901,7 +1065,7 @@
       );
     }
 
-    // Render the React application
+    // React 애플리케이션 마운트
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
