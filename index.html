@@ -100,12 +100,58 @@
       return result;
     };
 
+    // 루틴 뱃지용 색상 팔레트 (순서대로 배정)
+    const ROUTINE_COLORS = [
+      { bg: 'bg-blue-600', text: 'text-white', ring: 'border-blue-400' },
+      { bg: 'bg-emerald-600', text: 'text-white', ring: 'border-emerald-400' },
+      { bg: 'bg-rose-600', text: 'text-white', ring: 'border-rose-400' },
+      { bg: 'bg-amber-600', text: 'text-white', ring: 'border-amber-400' },
+      { bg: 'bg-purple-600', text: 'text-white', ring: 'border-purple-400' },
+      { bg: 'bg-cyan-600', text: 'text-white', ring: 'border-cyan-400' },
+      { bg: 'bg-pink-600', text: 'text-white', ring: 'border-pink-400' },
+    ];
+
+    // 운동 목록 → 부위별 세트 수 집계 (캘린더 요약 표시용)
+    const computeBreakdown = (exercises) => {
+      const result = {};
+      (exercises || []).forEach(ex => {
+        const bp = BODY_PARTS.find(p => p.id === ex.partId);
+        const partName = bp ? bp.name : '기타';
+        const setCount = (ex.sets || []).length;
+        result[partName] = (result[partName] || 0) + setCount;
+      });
+      return result;
+    };
+
     const isSearchMatch = (target, query) => {
       if (!query) return true;
       const cleanQuery = query.trim().toLowerCase();
       const cleanTarget = target.toLowerCase();
       const targetChosung = getChosung(target);
       return cleanTarget.includes(cleanQuery) || targetChosung.includes(cleanQuery);
+    };
+
+    // 운동 장비/이름 기반 아이콘 매칭 (실제 사용 기구에 맞는 아이콘 표시)
+    const getExerciseIconName = (equipment, name) => {
+      const e = equipment || '';
+      const n = name || '';
+
+      // 유산소 세부 종목별 아이콘
+      if (n.includes('사이클') || n.includes('자전거')) return 'bike';
+      if (n.includes('러닝') || n.includes('트레드밀')) return 'footprints';
+      if (n.includes('로잉') || n.includes('로우머신') || n.includes('수영')) return 'waves';
+      if (n.includes('계단') || n.includes('스텝') || n.includes('클라이머')) return 'trending-up';
+      if (n.includes('일립티컬') || n.includes('줄넘기')) return 'activity';
+
+      // 기구별 아이콘
+      if (e.includes('케이블')) return 'cable';
+      if (e.includes('철봉') || e.includes('맨몸') || e.includes('딥스바')) return 'user-round';
+      if (e.includes('밴드')) return 'minus';
+      if (e.includes('케틀벨')) return 'dumbbell';
+      if (e.includes('머신') && !e.includes('바벨') && !e.includes('덤벨')) return 'settings-2';
+      if (e.includes('바벨') || e.includes('덤벨') || e.includes('트랩바') || e.includes('플레이트') || e.includes('원반')) return 'dumbbell';
+
+      return 'dumbbell';
     };
 
     // 14개 부위
@@ -129,98 +175,242 @@
     // CSV 파일 데이터 기반 대량 수집 운동 DB (즐겨찾기는 사용자가 직접 ☆ 터치로 추가)
     const EXERCISE_DATABASE_SEED = [
       // 가슴
-      { id: 'c1', partId: 'chest', category: '벤치프레스', name: '플랫 - 바벨 벤치프레스', equipment: '바벨', isFavorite: false },
-      { id: 'c2', partId: 'chest', category: '벤치프레스', name: '플랫 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: false },
-      { id: 'c3', partId: 'chest', category: '벤치프레스', name: '플랫 - 스미스머신 벤치프레스', equipment: '스미스머신', isFavorite: false },
-      { id: 'c4', partId: 'chest', category: '벤치프레스', name: '인클라인 - 바벨 벤치프레스', equipment: '바벨', isFavorite: false },
-      { id: 'c5', partId: 'chest', category: '벤치프레스', name: '인클라인 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: false },
-      { id: 'c6', partId: 'chest', category: '벤치프레스', name: '인클라인 - 스미스머신 벤치프레스', equipment: '스미스머신', isFavorite: false },
-      { id: 'c7', partId: 'chest', category: '벤치프레스', name: '디클라인 - 바벨 벤치프레스', equipment: '바벨', isFavorite: false },
-      { id: 'c8', partId: 'chest', category: '벤치프레스', name: '디클라인 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: false },
-      { id: 'c9', partId: 'chest', category: '체스트프레스', name: '체스트프레스 (머신)', equipment: '머신', isFavorite: false },
-      { id: 'c10', partId: 'chest', category: '체스트프레스', name: '인클라인 체스트프레스 (머신)', equipment: '머신', isFavorite: false },
-      { id: 'c11', partId: 'chest', category: '체스트프레스', name: '디클라인 체스트프레스 (머신)', equipment: '머신', isFavorite: false },
-      { id: 'c12', partId: 'chest', category: '플라이', name: '펙덱플라이 (머신)', equipment: '머신', isFavorite: false },
-      { id: 'c13', partId: 'chest', category: '플라이', name: '덤벨 플라이 (플랫/인클라인)', equipment: '덤벨', isFavorite: false },
-      { id: 'c14', partId: 'chest', category: '플라이', name: '케이블 크로스오버 (하이투로우)', equipment: '케이블', isFavorite: false },
-      { id: 'c15', partId: 'chest', category: '플라이', name: '케이블 크로스오버 (로우투하이)', equipment: '케이블', isFavorite: false },
-      { id: 'c16', partId: 'chest', category: '딥스/맨몸', name: '딥스 (가슴타겟)', equipment: '맨몸', isFavorite: false },
-      { id: 'c17', partId: 'chest', category: '딥스/맨몸', name: '푸시업 (맨몸/디클라인)', equipment: '맨몸', isFavorite: false },
+      { id: 'c1', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 플랫 - 바벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c2', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 플랫 - 덤벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c3', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 플랫 - 스미스머신', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c4', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 인클라인 - 바벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c5', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 인클라인 - 덤벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c6', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 인클라인 - 스미스머신', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c7', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 디클라인 - 바벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c8', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 디클라인 - 덤벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c9', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 디클라인 - 스미스머신', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c10', partId: 'chest', category: '벤치프레스', name: '벤치프레스: 클로즈그립 - 바벨', equipment: '바벨/덤벨/스미스머신', isFavorite: false },
+      { id: 'c11', partId: 'chest', category: '체스트프레스(머신)', name: '체스트프레스(머신): 플랫 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'c12', partId: 'chest', category: '체스트프레스(머신)', name: '체스트프레스(머신): 인클라인 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'c13', partId: 'chest', category: '체스트프레스(머신)', name: '체스트프레스(머신): 디클라인 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'c14', partId: 'chest', category: '체스트프레스(머신)', name: '체스트프레스(머신): 레버리지 머신(핀 플레이트)', equipment: '머신', isFavorite: false },
+      { id: 'c15', partId: 'chest', category: '플라이', name: '플라이: 플랫 - 덤벨', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c16', partId: 'chest', category: '플라이', name: '플라이: 인클라인 - 덤벨', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c17', partId: 'chest', category: '플라이', name: '플라이: 디클라인 - 덤벨', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c18', partId: 'chest', category: '플라이', name: '플라이: 펙덱 플라이(머신)', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c19', partId: 'chest', category: '플라이', name: '플라이: 케이블 크로스오버 - 로우투하이', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c20', partId: 'chest', category: '플라이', name: '플라이: 케이블 크로스오버 - 하이투로우', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c21', partId: 'chest', category: '플라이', name: '플라이: 케이블 크로스오버 - 미드(수평)', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 'c22', partId: 'chest', category: '푸시업', name: '푸시업: 기본(숄더너비)', equipment: '맨몸', isFavorite: false },
+      { id: 'c23', partId: 'chest', category: '푸시업', name: '푸시업: 와이드그립', equipment: '맨몸', isFavorite: false },
+      { id: 'c24', partId: 'chest', category: '푸시업', name: '푸시업: 클로즈/다이아몬드그립', equipment: '맨몸', isFavorite: false },
+      { id: 'c25', partId: 'chest', category: '푸시업', name: '푸시업: 인클라인(손 높은 위치)', equipment: '맨몸', isFavorite: false },
+      { id: 'c26', partId: 'chest', category: '푸시업', name: '푸시업: 디클라인(발 높은 위치)', equipment: '맨몸', isFavorite: false },
+      { id: 'c27', partId: 'chest', category: '푸시업', name: '푸시업: 니푸시업(초보용)', equipment: '맨몸', isFavorite: false },
+      { id: 'c28', partId: 'chest', category: '푸시업', name: '푸시업: 플라이오메트릭(박수 푸시업)', equipment: '맨몸', isFavorite: false },
+      { id: 'c29', partId: 'chest', category: '딥스', name: '딥스: 체스트딥스(상체 숙여서)', equipment: '딥스바/머신', isFavorite: false },
+      { id: 'c30', partId: 'chest', category: '딥스', name: '딥스: 패러렐바 딥스', equipment: '딥스바/머신', isFavorite: false },
+      { id: 'c31', partId: 'chest', category: '딥스', name: '딥스: 머신 딥스', equipment: '딥스바/머신', isFavorite: false },
+      { id: 'c32', partId: 'chest', category: '딥스', name: '딥스: 어시스트 머신 딥스', equipment: '딥스바/머신', isFavorite: false },
+      { id: 'c33', partId: 'chest', category: '풀오버', name: '풀오버: 덤벨 풀오버(플랫벤치)', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 'c34', partId: 'chest', category: '풀오버', name: '풀오버: 케이블 풀오버', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 'c35', partId: 'chest', category: '풀오버', name: '풀오버: 머신 풀오버', equipment: '덤벨/케이블/머신', isFavorite: false },
 
       // 등
-      { id: 'k1', partId: 'back', category: '풀다운/풀업', name: '랫풀다운 (와이드그립)', equipment: '케이블', isFavorite: false },
-      { id: 'k2', partId: 'back', category: '풀다운/풀업', name: '랫풀다운 (클로즈/패러렐)', equipment: '케이블', isFavorite: false },
-      { id: 'k3', partId: 'back', category: '풀다운/풀업', name: '풀업 (턱걸이)', equipment: '맨몸', isFavorite: false },
-      { id: 'k4', partId: 'back', category: '풀다운/풀업', name: '친업 (언더그립 턱걸이)', equipment: '맨몸', isFavorite: false },
-      { id: 'k5', partId: 'back', category: '로우', name: '바벨로우 (오버/언더그립)', equipment: '바벨', isFavorite: false },
-      { id: 'k6', partId: 'back', category: '로우', name: '덤벨로우 (원암/양손)', equipment: '덤벨', isFavorite: false },
-      { id: 'k7', partId: 'back', category: '로우', name: '시티드 케이블로우', equipment: '케이블', isFavorite: false },
-      { id: 'k8', partId: 'back', category: '로우', name: 'T바로우 (머신/바벨)', equipment: '머신', isFavorite: false },
-      { id: 'k9', partId: 'back', category: '데드리프트', name: '컨벤셔널 데드리프트', equipment: '바벨', isFavorite: false },
-      { id: 'k10', partId: 'back', category: '데드리프트', name: '루마니안 데드리프트', equipment: '바벨', isFavorite: false },
+      { id: 'k1', partId: 'back', category: '풀업/친업', name: '풀업/친업: 와이드그립 풀업', equipment: '철봉/어시스트머신', isFavorite: false },
+      { id: 'k2', partId: 'back', category: '풀업/친업', name: '풀업/친업: 뉴트럴그립 풀업', equipment: '철봉/어시스트머신', isFavorite: false },
+      { id: 'k3', partId: 'back', category: '풀업/친업', name: '풀업/친업: 친업(언더그립)', equipment: '철봉/어시스트머신', isFavorite: false },
+      { id: 'k4', partId: 'back', category: '풀업/친업', name: '풀업/친업: 어시스트 머신 풀업', equipment: '철봉/어시스트머신', isFavorite: false },
+      { id: 'k5', partId: 'back', category: '풀업/친업', name: '풀업/친업: 밴드 보조 풀업', equipment: '철봉/어시스트머신', isFavorite: false },
+      { id: 'k6', partId: 'back', category: '풀업/친업', name: '풀업/친업: 웨이티드 풀업', equipment: '철봉/어시스트머신', isFavorite: false },
+      { id: 'k7', partId: 'back', category: '랫풀다운', name: '랫풀다운: 와이드그립 - 케이블머신', equipment: '케이블머신', isFavorite: false },
+      { id: 'k8', partId: 'back', category: '랫풀다운', name: '랫풀다운: 클로즈그립(V바) - 케이블머신', equipment: '케이블머신', isFavorite: false },
+      { id: 'k9', partId: 'back', category: '랫풀다운', name: '랫풀다운: 뉴트럴그립 - 케이블머신', equipment: '케이블머신', isFavorite: false },
+      { id: 'k10', partId: 'back', category: '랫풀다운', name: '랫풀다운: 리버스그립(언더핸드) - 케이블머신', equipment: '케이블머신', isFavorite: false },
+      { id: 'k11', partId: 'back', category: '랫풀다운', name: '랫풀다운: 스트레이트암 풀다운 - 케이블', equipment: '케이블머신', isFavorite: false },
+      { id: 'k12', partId: 'back', category: '로우', name: '로우: 바벨로우(오버핸드)', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k13', partId: 'back', category: '로우', name: '로우: 바벨로우(언더핸드)', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k14', partId: 'back', category: '로우', name: '로우: 펜들레이로우 - 바벨', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k15', partId: 'back', category: '로우', name: '로우: 덤벨 원암로우 - 벤치 지지', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k16', partId: 'back', category: '로우', name: '로우: T바로우 - 머신/랜드마인', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k17', partId: 'back', category: '로우', name: '로우: 시티드 케이블로우 - 와이드그립', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k18', partId: 'back', category: '로우', name: '로우: 시티드 케이블로우 - 클로즈그립', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k19', partId: 'back', category: '로우', name: '로우: 머신로우(체스트서포트)', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k20', partId: 'back', category: '로우', name: '로우: 인버티드로우(맨몸/스미스)', equipment: '바벨/덤벨/케이블/머신', isFavorite: false },
+      { id: 'k21', partId: 'back', category: '데드리프트', name: '데드리프트: 컨벤셔널 - 바벨', equipment: '바벨/덤벨/트랩바', isFavorite: false },
+      { id: 'k22', partId: 'back', category: '데드리프트', name: '데드리프트: 루마니안(RDL) - 바벨', equipment: '바벨/덤벨/트랩바', isFavorite: false },
+      { id: 'k23', partId: 'back', category: '데드리프트', name: '데드리프트: 루마니안(RDL) - 덤벨', equipment: '바벨/덤벨/트랩바', isFavorite: false },
+      { id: 'k24', partId: 'back', category: '데드리프트', name: '데드리프트: 스티프레그 - 바벨', equipment: '바벨/덤벨/트랩바', isFavorite: false },
+      { id: 'k25', partId: 'back', category: '데드리프트', name: '데드리프트: 트랩바(핵스) 데드리프트', equipment: '바벨/덤벨/트랩바', isFavorite: false },
+      { id: 'k26', partId: 'back', category: '데드리프트', name: '데드리프트: 스모 데드리프트', equipment: '바벨/덤벨/트랩바', isFavorite: false },
+      { id: 'k27', partId: 'back', category: '풀오버(등 위주)', name: '풀오버(등 위주): 덤벨 풀오버', equipment: '덤벨/케이블', isFavorite: false },
+      { id: 'k28', partId: 'back', category: '풀오버(등 위주)', name: '풀오버(등 위주): 케이블 풀오버(스트레이트암)', equipment: '덤벨/케이블', isFavorite: false },
 
       // 어깨
-      { id: 's1', partId: 'shoulders', category: '오버헤드프레스', name: '오버헤드프레스 (OHP - 바벨)', equipment: '바벨', isFavorite: false },
-      { id: 's2', partId: 'shoulders', category: '오버헤드프레스', name: '덤벨 숄더프레스', equipment: '덤벨', isFavorite: false },
-      { id: 's3', partId: 'shoulders', category: '오버헤드프레스', name: '스미스머신 숄더프레스', equipment: '스미스머신', isFavorite: false },
-      { id: 's4', partId: 'shoulders', category: '오버헤드프레스', name: '숄더프레스 머신', equipment: '머신', isFavorite: false },
-      { id: 's5', partId: 'shoulders', category: '측면레이즈', name: '사이드 라테럴레이즈 (덤벨)', equipment: '덤벨', isFavorite: false },
-      { id: 's6', partId: 'shoulders', category: '측면레이즈', name: '케이블 라테럴레이즈', equipment: '케이블', isFavorite: false },
-      { id: 's7', partId: 'shoulders', category: '측면레이즈', name: '머신 라테럴레이즈', equipment: '머신', isFavorite: false },
-      { id: 's8', partId: 'shoulders', category: '후면레이즈', name: '리버스 펙덱플라이 (후면)', equipment: '머신', isFavorite: false },
-      { id: 's9', partId: 'shoulders', category: '후면레이즈', name: '벤트오버 덤벨레이즈', equipment: '덤벨', isFavorite: false },
+      { id: 's1', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 밀리터리프레스 - 바벨(스탠딩)', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's2', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 밀리터리프레스 - 바벨(시티드)', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's3', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 덤벨숄더프레스 - 시티드', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's4', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 덤벨숄더프레스 - 스탠딩', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's5', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 아놀드프레스 - 덤벨', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's6', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 스미스머신 숄더프레스', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's7', partId: 'shoulders', category: '숄더프레스', name: '숄더프레스: 머신 숄더프레스', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 's8', partId: 'shoulders', category: '레터럴레이즈', name: '레터럴레이즈: 덤벨 레터럴레이즈 - 스탠딩', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 's9', partId: 'shoulders', category: '레터럴레이즈', name: '레터럴레이즈: 덤벨 레터럴레이즈 - 시티드', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 's10', partId: 'shoulders', category: '레터럴레이즈', name: '레터럴레이즈: 케이블 레터럴레이즈(편측)', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 's11', partId: 'shoulders', category: '레터럴레이즈', name: '레터럴레이즈: 머신 레터럴레이즈', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 's12', partId: 'shoulders', category: '레터럴레이즈', name: '레터럴레이즈: 리닝 레터럴레이즈(지지대)', equipment: '덤벨/케이블/머신', isFavorite: false },
+      { id: 's13', partId: 'shoulders', category: '프론트레이즈', name: '프론트레이즈: 덤벨 프론트레이즈', equipment: '덤벨/바벨/케이블/원판', isFavorite: false },
+      { id: 's14', partId: 'shoulders', category: '프론트레이즈', name: '프론트레이즈: 바벨 프론트레이즈', equipment: '덤벨/바벨/케이블/원판', isFavorite: false },
+      { id: 's15', partId: 'shoulders', category: '프론트레이즈', name: '프론트레이즈: 케이블 프론트레이즈', equipment: '덤벨/바벨/케이블/원판', isFavorite: false },
+      { id: 's16', partId: 'shoulders', category: '프론트레이즈', name: '프론트레이즈: 플레이트 프론트레이즈', equipment: '덤벨/바벨/케이블/원판', isFavorite: false },
+      { id: 's17', partId: 'shoulders', category: '리어델트(후면삼각근)', name: '리어델트(후면삼각근): 벤트오버 덤벨 레이즈', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 's18', partId: 'shoulders', category: '리어델트(후면삼각근)', name: '리어델트(후면삼각근): 리버스 펙덱플라이(머신)', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 's19', partId: 'shoulders', category: '리어델트(후면삼각근)', name: '리어델트(후면삼각근): 케이블 페이스풀', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 's20', partId: 'shoulders', category: '리어델트(후면삼각근)', name: '리어델트(후면삼각근): 케이블 리버스 크로스오버', equipment: '덤벨/머신/케이블', isFavorite: false },
+      { id: 's21', partId: 'shoulders', category: '업라이트로우', name: '업라이트로우: 바벨 업라이트로우', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 's22', partId: 'shoulders', category: '업라이트로우', name: '업라이트로우: 덤벨 업라이트로우', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 's23', partId: 'shoulders', category: '업라이트로우', name: '업라이트로우: 케이블 업라이트로우', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 's24', partId: 'shoulders', category: '업라이트로우', name: '업라이트로우: EZ바 업라이트로우', equipment: '바벨/덤벨/케이블', isFavorite: false },
 
       // 삼두
-      { id: 't1', partId: 'triceps', category: '푸시다운', name: '케이블 트라이셉스 푸시다운 (일자바)', equipment: '케이블', isFavorite: false },
-      { id: 't2', partId: 'triceps', category: '푸시다운', name: '케이블 트라이셉스 푸시다운 (로프)', equipment: '케이블', isFavorite: false },
-      { id: 't3', partId: 'triceps', category: '익스텐션', name: '라잉 트라이셉스 익스텐션 (라트익)', equipment: '바벨', isFavorite: false },
-      { id: 't4', partId: 'triceps', category: '익스텐션', name: '오버헤드 덤벨 익스텐션', equipment: '덤벨', isFavorite: false },
+      { id: 't1', partId: 'triceps', category: '푸시다운', name: '푸시다운: 케이블 - 스트레이트바', equipment: '케이블머신', isFavorite: false },
+      { id: 't2', partId: 'triceps', category: '푸시다운', name: '푸시다운: 케이블 - 로프(V자 마무리)', equipment: '케이블머신', isFavorite: false },
+      { id: 't3', partId: 'triceps', category: '푸시다운', name: '푸시다운: 케이블 - V바', equipment: '케이블머신', isFavorite: false },
+      { id: 't4', partId: 'triceps', category: '푸시다운', name: '푸시다운: 케이블 - 리버스그립', equipment: '케이블머신', isFavorite: false },
+      { id: 't5', partId: 'triceps', category: '익스텐션', name: '익스텐션: 오버헤드 익스텐션 - 덤벨(양손)', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 't6', partId: 'triceps', category: '익스텐션', name: '익스텐션: 오버헤드 익스텐션 - 케이블/로프', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 't7', partId: 'triceps', category: '익스텐션', name: '익스텐션: 라잉 트라이셉스 익스텐션(스컬크러셔) - 바벨', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 't8', partId: 'triceps', category: '익스텐션', name: '익스텐션: 라잉 트라이셉스 익스텐션 - EZ바', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 't9', partId: 'triceps', category: '익스텐션', name: '익스텐션: 라잉 트라이셉스 익스텐션 - 덤벨', equipment: '바벨/덤벨/케이블', isFavorite: false },
+      { id: 't10', partId: 'triceps', category: '킥백', name: '킥백: 덤벨 킥백(벤치 지지)', equipment: '덤벨/케이블', isFavorite: false },
+      { id: 't11', partId: 'triceps', category: '킥백', name: '킥백: 케이블 킥백', equipment: '덤벨/케이블', isFavorite: false },
+      { id: 't12', partId: 'triceps', category: '딥스(삼두 위주)', name: '딥스(삼두 위주): 벤치딥스(발 바닥/의자 이용)', equipment: '벤치/머신', isFavorite: false },
+      { id: 't13', partId: 'triceps', category: '딥스(삼두 위주)', name: '딥스(삼두 위주): 머신 딥스(좁은 그립)', equipment: '벤치/머신', isFavorite: false },
+      { id: 't14', partId: 'triceps', category: '클로즈그립 프레스', name: '클로즈그립 프레스: 클로즈그립 벤치프레스 - 바벨', equipment: '바벨/스미스머신', isFavorite: false },
+      { id: 't15', partId: 'triceps', category: '클로즈그립 프레스', name: '클로즈그립 프레스: 클로즈그립 벤치프레스 - 스미스머신', equipment: '바벨/스미스머신', isFavorite: false },
 
       // 이두
-      { id: 'b1', partId: 'biceps', category: '바벨컬', name: '바벨컬 (EZ바/일자바)', equipment: '바벨', isFavorite: false },
-      { id: 'b2', partId: 'biceps', category: '덤벨컬', name: '덤벨컬 (Alternate/Simultaneous)', equipment: '덤벨', isFavorite: false },
-      { id: 'b3', partId: 'biceps', category: '해머컬', name: '해머컬 (덤벨/케이블)', equipment: '덤벨', isFavorite: false },
-      { id: 'b4', partId: 'biceps', category: '프리처컬', name: '프리처컬 (머신/EZ바)', equipment: '머신', isFavorite: false },
+      { id: 'b1', partId: 'biceps', category: '바벨/EZ바 컬', name: '바벨/EZ바 컬: 스탠딩 바벨컬', equipment: '바벨/EZ바', isFavorite: false },
+      { id: 'b2', partId: 'biceps', category: '바벨/EZ바 컬', name: '바벨/EZ바 컬: 스탠딩 EZ바컬', equipment: '바벨/EZ바', isFavorite: false },
+      { id: 'b3', partId: 'biceps', category: '바벨/EZ바 컬', name: '바벨/EZ바 컬: 프리처컬(스콧벤치) - 바벨', equipment: '바벨/EZ바', isFavorite: false },
+      { id: 'b4', partId: 'biceps', category: '바벨/EZ바 컬', name: '바벨/EZ바 컬: 프리처컬(스콧벤치) - EZ바', equipment: '바벨/EZ바', isFavorite: false },
+      { id: 'b5', partId: 'biceps', category: '바벨/EZ바 컬', name: '바벨/EZ바 컬: 리버스그립 바벨컬', equipment: '바벨/EZ바', isFavorite: false },
+      { id: 'b6', partId: 'biceps', category: '덤벨 컬', name: '덤벨 컬: 스탠딩 얼터네이트 덤벨컬', equipment: '덤벨', isFavorite: false },
+      { id: 'b7', partId: 'biceps', category: '덤벨 컬', name: '덤벨 컬: 시티드 덤벨컬', equipment: '덤벨', isFavorite: false },
+      { id: 'b8', partId: 'biceps', category: '덤벨 컬', name: '덤벨 컬: 인클라인 벤치 덤벨컬', equipment: '덤벨', isFavorite: false },
+      { id: 'b9', partId: 'biceps', category: '덤벨 컬', name: '덤벨 컬: 해머컬(뉴트럴그립)', equipment: '덤벨', isFavorite: false },
+      { id: 'b10', partId: 'biceps', category: '덤벨 컬', name: '덤벨 컬: 컨센트레이션컬', equipment: '덤벨', isFavorite: false },
+      { id: 'b11', partId: 'biceps', category: '덤벨 컬', name: '덤벨 컬: 스파이더컬(인클라인 벤치 엎드려서)', equipment: '덤벨', isFavorite: false },
+      { id: 'b12', partId: 'biceps', category: '케이블 컬', name: '케이블 컬: 스탠딩 케이블컬(스트레이트바)', equipment: '케이블머신', isFavorite: false },
+      { id: 'b13', partId: 'biceps', category: '케이블 컬', name: '케이블 컬: 로프 해머컬 - 케이블', equipment: '케이블머신', isFavorite: false },
+      { id: 'b14', partId: 'biceps', category: '케이블 컬', name: '케이블 컬: 싱글암 케이블컬', equipment: '케이블머신', isFavorite: false },
+      { id: 'b15', partId: 'biceps', category: '머신 컬', name: '머신 컬: 머신 프리처컬', equipment: '머신', isFavorite: false },
+      { id: 'b16', partId: 'biceps', category: '머신 컬', name: '머신 컬: 머신 컬', equipment: '머신', isFavorite: false },
 
       // 전완
-      { id: 'f1', partId: 'forearms', category: '리스트컬', name: '바벨 리스트컬', equipment: '바벨', isFavorite: false },
-      { id: 'f2', partId: 'forearms', category: '리스트컬', name: '덤벨 리버스 리스트컬', equipment: '덤벨', isFavorite: false },
+      { id: 'f1', partId: 'forearms', category: '손목 컬', name: '손목 컬: 리스트컬(손바닥 위) - 바벨/덤벨', equipment: '바벨/덤벨/롤러', isFavorite: false },
+      { id: 'f2', partId: 'forearms', category: '손목 컬', name: '손목 컬: 리버스 리스트컬(손등 위) - 바벨/덤벨', equipment: '바벨/덤벨/롤러', isFavorite: false },
+      { id: 'f3', partId: 'forearms', category: '손목 컬', name: '손목 컬: 롤러 리스트 롤업', equipment: '바벨/덤벨/롤러', isFavorite: false },
+      { id: 'f4', partId: 'forearms', category: '그립 강화', name: '그립 강화: 파머스캐리(덤벨/케틀벨)', equipment: '덤벨/케틀벨/철봉', isFavorite: false },
+      { id: 'f5', partId: 'forearms', category: '그립 강화', name: '그립 강화: 행바 데드행(철봉 매달리기)', equipment: '덤벨/케틀벨/철봉', isFavorite: false },
+      { id: 'f6', partId: 'forearms', category: '그립 강화', name: '그립 강화: 그립퍼 트레이닝', equipment: '덤벨/케틀벨/철봉', isFavorite: false },
 
       // 하체
-      { id: 'l1', partId: 'quads', category: '스쿼트', name: '바벨 백스쿼트', equipment: '바벨', isFavorite: false },
-      { id: 'l2', partId: 'quads', category: '스쿼트', name: '스쿼트: 스미스 머신', equipment: '스미스머신', isFavorite: false },
-      { id: 'l3', partId: 'quads', category: '스쿼트', name: '프론트 스쿼트', equipment: '바벨', isFavorite: false },
-      { id: 'l4', partId: 'quads', category: '레그프레스', name: '파워 레그프레스', equipment: '머신', isFavorite: false },
-      { id: 'l5', partId: 'quads', category: '익스텐션', name: '레그 익스텐션', equipment: '머신', isFavorite: false },
-      { id: 'l6', partId: 'quads', category: '레그컬', name: '라잉 레그컬', equipment: '머신', isFavorite: false },
-      { id: 'l7', partId: 'quads', category: '레그컬', name: '시티드 레그컬', equipment: '머신', isFavorite: false },
+      { id: 'l1', partId: 'quads', category: '스쿼트', name: '스쿼트: 백스쿼트 - 바벨(하이바)', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l2', partId: 'quads', category: '스쿼트', name: '스쿼트: 백스쿼트 - 바벨(로우바)', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l3', partId: 'quads', category: '스쿼트', name: '스쿼트: 프론트스쿼트 - 바벨', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l4', partId: 'quads', category: '스쿼트', name: '스쿼트: 스미스머신 스쿼트', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l5', partId: 'quads', category: '스쿼트', name: '스쿼트: 고블릿스쿼트 - 덤벨/케틀벨', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l6', partId: 'quads', category: '스쿼트', name: '스쿼트: 핵스쿼트 - 머신', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l7', partId: 'quads', category: '스쿼트', name: '스쿼트: 박스스쿼트', equipment: '바벨/덤벨/스미스/머신', isFavorite: false },
+      { id: 'l8', partId: 'quads', category: '레그프레스', name: '레그프레스: 45도 레그프레스 - 머신(와이드스탠스)', equipment: '머신', isFavorite: false },
+      { id: 'l9', partId: 'quads', category: '레그프레스', name: '레그프레스: 45도 레그프레스 - 머신(내로우스탠스)', equipment: '머신', isFavorite: false },
+      { id: 'l10', partId: 'quads', category: '레그프레스', name: '레그프레스: 호리즌탈 레그프레스 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'l11', partId: 'quads', category: '레그프레스', name: '레그프레스: 싱글레그 레그프레스', equipment: '머신', isFavorite: false },
+      { id: 'l12', partId: 'quads', category: '런지', name: '런지: 바벨 런지(제자리)', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l13', partId: 'quads', category: '런지', name: '런지: 덤벨 런지(제자리)', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l14', partId: 'quads', category: '런지', name: '런지: 워킹런지 - 덤벨/바벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l15', partId: 'quads', category: '런지', name: '런지: 리버스런지 - 덤벨/바벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l16', partId: 'quads', category: '런지', name: '런지: 불가리안 스플릿스쿼트 - 덤벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l17', partId: 'quads', category: '런지', name: '런지: 사이드런지 - 덤벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l18', partId: 'quads', category: '레그익스텐션', name: '레그익스텐션: 레그익스텐션 - 머신(양발)', equipment: '머신', isFavorite: false },
+      { id: 'l19', partId: 'quads', category: '레그익스텐션', name: '레그익스텐션: 레그익스텐션 - 머신(편측)', equipment: '머신', isFavorite: false },
+      { id: 'l20', partId: 'quads', category: '레그컬', name: '레그컬: 라잉 레그컬 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'l21', partId: 'quads', category: '레그컬', name: '레그컬: 시티드 레그컬 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'l22', partId: 'quads', category: '레그컬', name: '레그컬: 스탠딩 레그컬 - 머신', equipment: '머신', isFavorite: false },
+      { id: 'l23', partId: 'quads', category: '루마니안데드리프트', name: '루마니안데드리프트: RDL - 바벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l24', partId: 'quads', category: '루마니안데드리프트', name: '루마니안데드리프트: RDL - 덤벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l25', partId: 'quads', category: '루마니안데드리프트', name: '루마니안데드리프트: 싱글레그 RDL - 덤벨', equipment: '바벨/덤벨', isFavorite: false },
+      { id: 'l26', partId: 'quads', category: '힙쓰러스트/글루트브릿지', name: '힙쓰러스트/글루트브릿지: 바벨 힙쓰러스트', equipment: '바벨/머신/덤벨/밴드', isFavorite: false },
+      { id: 'l27', partId: 'quads', category: '힙쓰러스트/글루트브릿지', name: '힙쓰러스트/글루트브릿지: 머신 힙쓰러스트', equipment: '바벨/머신/덤벨/밴드', isFavorite: false },
+      { id: 'l28', partId: 'quads', category: '힙쓰러스트/글루트브릿지', name: '힙쓰러스트/글루트브릿지: 덤벨 글루트브릿지', equipment: '바벨/머신/덤벨/밴드', isFavorite: false },
+      { id: 'l29', partId: 'quads', category: '힙쓰러스트/글루트브릿지', name: '힙쓰러스트/글루트브릿지: 밴드 힙쓰러스트', equipment: '바벨/머신/덤벨/밴드', isFavorite: false },
+      { id: 'l30', partId: 'quads', category: '케이블 킥백(둔근)', name: '케이블 킥백(둔근): 케이블 힙 킥백(발목 스트랩)', equipment: '케이블/머신', isFavorite: false },
+      { id: 'l31', partId: 'quads', category: '케이블 킥백(둔근)', name: '케이블 킥백(둔근): 머신 힙 킥백', equipment: '케이블/머신', isFavorite: false },
+      { id: 'l32', partId: 'quads', category: '어덕터/어브덕터', name: '어덕터/어브덕터: 이너싸이 머신(내전근)', equipment: '머신', isFavorite: false },
+      { id: 'l33', partId: 'quads', category: '어덕터/어브덕터', name: '어덕터/어브덕터: 아우터싸이 머신(외전근)', equipment: '머신', isFavorite: false },
 
       // 종아리
-      { id: 'ca1', partId: 'calves', category: '카프레이즈', name: '스탠딩 카프레이즈', equipment: '머신', isFavorite: false },
-      { id: 'ca2', partId: 'calves', category: '카프레이즈', name: '시티드 카프레이즈', equipment: '머신', isFavorite: false },
+      { id: 'ca1', partId: 'calves', category: '카프레이즈', name: '카프레이즈: 스탠딩 카프레이즈 - 머신', equipment: '머신/스미스/덤벨', isFavorite: false },
+      { id: 'ca2', partId: 'calves', category: '카프레이즈', name: '카프레이즈: 스탠딩 카프레이즈 - 스미스머신', equipment: '머신/스미스/덤벨', isFavorite: false },
+      { id: 'ca3', partId: 'calves', category: '카프레이즈', name: '카프레이즈: 시티드 카프레이즈 - 머신', equipment: '머신/스미스/덤벨', isFavorite: false },
+      { id: 'ca4', partId: 'calves', category: '카프레이즈', name: '카프레이즈: 레그프레스 카프레이즈(발끝으로 밀기)', equipment: '머신/스미스/덤벨', isFavorite: false },
+      { id: 'ca5', partId: 'calves', category: '카프레이즈', name: '카프레이즈: 덤벨 카프레이즈(맨몸/한발)', equipment: '머신/스미스/덤벨', isFavorite: false },
 
       // 복부
-      { id: 'a1', partId: 'abs', category: '크런치', name: '기본 크런치', equipment: '맨몸', isFavorite: false },
-      { id: 'a2', partId: 'abs', category: '레그레이즈', name: '행잉 레그레이즈', equipment: '철봉', isFavorite: false },
-      { id: 'a3', partId: 'abs', category: '플랭크', name: '기본 플랭크', equipment: '맨몸', isFavorite: false },
+      { id: 'a1', partId: 'abs', category: '크런치/싯업', name: '크런치/싯업: 베이직 크런치(맨몸)', equipment: '맨몸/케이블/머신', isFavorite: false },
+      { id: 'a2', partId: 'abs', category: '크런치/싯업', name: '크런치/싯업: 싯업(맨몸)', equipment: '맨몸/케이블/머신', isFavorite: false },
+      { id: 'a3', partId: 'abs', category: '크런치/싯업', name: '크런치/싯업: 케이블 크런치(무릎 꿇고)', equipment: '맨몸/케이블/머신', isFavorite: false },
+      { id: 'a4', partId: 'abs', category: '크런치/싯업', name: '크런치/싯업: 머신 크런치', equipment: '맨몸/케이블/머신', isFavorite: false },
+      { id: 'a5', partId: 'abs', category: '크런치/싯업', name: '크런치/싯업: 디클라인 벤치 싯업', equipment: '맨몸/케이블/머신', isFavorite: false },
+      { id: 'a6', partId: 'abs', category: '크런치/싯업', name: '크런치/싯업: 바이시클 크런치', equipment: '맨몸/케이블/머신', isFavorite: false },
+      { id: 'a7', partId: 'abs', category: '레그레이즈', name: '레그레이즈: 라잉 레그레이즈(바닥)', equipment: '맨몸/철봉/머신', isFavorite: false },
+      { id: 'a8', partId: 'abs', category: '레그레이즈', name: '레그레이즈: 행잉 레그레이즈(철봉)', equipment: '맨몸/철봉/머신', isFavorite: false },
+      { id: 'a9', partId: 'abs', category: '레그레이즈', name: '레그레이즈: 행잉 니레이즈(철봉)', equipment: '맨몸/철봉/머신', isFavorite: false },
+      { id: 'a10', partId: 'abs', category: '레그레이즈', name: '레그레이즈: 캡틴스체어 레그레이즈(머신)', equipment: '맨몸/철봉/머신', isFavorite: false },
+      { id: 'a11', partId: 'abs', category: '회전운동', name: '회전운동: 러시안트위스트(맨몸/플레이트)', equipment: '맨몸/플레이트/케이블', isFavorite: false },
+      { id: 'a12', partId: 'abs', category: '회전운동', name: '회전운동: 케이블 우드촙(하이투로우)', equipment: '맨몸/플레이트/케이블', isFavorite: false },
+      { id: 'a13', partId: 'abs', category: '회전운동', name: '회전운동: 케이블 우드촙(로우투하이)', equipment: '맨몸/플레이트/케이블', isFavorite: false },
+      { id: 'a14', partId: 'abs', category: '회전운동', name: '회전운동: 랜드마인 로테이션', equipment: '맨몸/플레이트/케이블', isFavorite: false },
+      { id: 'a15', partId: 'abs', category: '플랭크/코어안정화', name: '플랭크/코어안정화: 기본 플랭크', equipment: '맨몸/앱롤러/바벨/짐볼', isFavorite: false },
+      { id: 'a16', partId: 'abs', category: '플랭크/코어안정화', name: '플랭크/코어안정화: 사이드플랭크', equipment: '맨몸/앱롤러/바벨/짐볼', isFavorite: false },
+      { id: 'a17', partId: 'abs', category: '플랭크/코어안정화', name: '플랭크/코어안정화: 앱롤아웃(바퀴/바벨)', equipment: '맨몸/앱롤러/바벨/짐볼', isFavorite: false },
+      { id: 'a18', partId: 'abs', category: '플랭크/코어안정화', name: '플랭크/코어안정화: 스태빌리티볼 플랭크', equipment: '맨몸/앱롤러/바벨/짐볼', isFavorite: false },
 
       // 승모근
-      { id: 'tr1_1', partId: 'traps', category: '슈러그', name: '바벨 슈러그', equipment: '바벨', isFavorite: false },
-      { id: 'tr1_2', partId: 'traps', category: '슈러그', name: '덤벨 슈러그', equipment: '덤벨', isFavorite: false },
+      { id: 'tr1', partId: 'traps', category: '슈러그', name: '슈러그: 바벨 슈러그', equipment: '바벨/덤벨/스미스/케이블', isFavorite: false },
+      { id: 'tr2', partId: 'traps', category: '슈러그', name: '슈러그: 덤벨 슈러그', equipment: '바벨/덤벨/스미스/케이블', isFavorite: false },
+      { id: 'tr3', partId: 'traps', category: '슈러그', name: '슈러그: 스미스머신 슈러그', equipment: '바벨/덤벨/스미스/케이블', isFavorite: false },
+      { id: 'tr4', partId: 'traps', category: '슈러그', name: '슈러그: 케이블 슈러그', equipment: '바벨/덤벨/스미스/케이블', isFavorite: false },
+      { id: 'tr5', partId: 'traps', category: '슈러그', name: '슈러그: 비하인드백 바벨 슈러그', equipment: '바벨/덤벨/스미스/케이블', isFavorite: false },
 
       // 허리
-      { id: 'lb1', partId: 'lower_back', category: '익스텐션', name: '백 익스텐션: 중량', equipment: '맨몸/원반', isFavorite: false },
+      { id: 'lb1', partId: 'lower_back', category: '백익스텐션', name: '백익스텐션: 하이퍼익스텐션 - 머신(45도)', equipment: '머신/바벨', isFavorite: false },
+      { id: 'lb2', partId: 'lower_back', category: '백익스텐션', name: '백익스텐션: 하이퍼익스텐션 - 머신(90도)', equipment: '머신/바벨', isFavorite: false },
+      { id: 'lb3', partId: 'lower_back', category: '백익스텐션', name: '백익스텐션: 굿모닝 - 바벨', equipment: '머신/바벨', isFavorite: false },
+      { id: 'lb4', partId: 'lower_back', category: '백익스텐션', name: '백익스텐션: 리버스 하이퍼익스텐션 - 머신', equipment: '머신/바벨', isFavorite: false },
 
       // 목
-      { id: 'n1', partId: 'neck', category: '넥플렉션', name: '넥 플렉션 (맨몸/원반)', equipment: '맨몸', isFavorite: false },
+      { id: 'n1', partId: 'neck', category: '넥 트레이닝', name: '넥 트레이닝: 넥 컬(전방) - 머신/플레이트', equipment: '머신/플레이트', isFavorite: false },
+      { id: 'n2', partId: 'neck', category: '넥 트레이닝', name: '넥 트레이닝: 넥 익스텐션(후방) - 머신/플레이트', equipment: '머신/플레이트', isFavorite: false },
+      { id: 'n3', partId: 'neck', category: '넥 트레이닝', name: '넥 트레이닝: 넥 레터럴 - 머신', equipment: '머신/플레이트', isFavorite: false },
 
       // 전신
-      { id: 'fb1', partId: 'full_body', category: '버피', name: '버피 테스트', equipment: '맨몸', isFavorite: false },
-      { id: 'fb2', partId: 'full_body', category: '케틀벨', name: '케틀벨 스윙', equipment: '케틀벨', isFavorite: false },
+      { id: 'fb1', partId: 'full_body', category: '복합 다관절 운동', name: '복합 다관절 운동: 바벨 클린 앤 저크', equipment: '바벨/덤벨/케틀벨', isFavorite: false },
+      { id: 'fb2', partId: 'full_body', category: '복합 다관절 운동', name: '복합 다관절 운동: 케틀벨 스윙', equipment: '바벨/덤벨/케틀벨', isFavorite: false },
+      { id: 'fb3', partId: 'full_body', category: '복합 다관절 운동', name: '복합 다관절 운동: 터키시겟업 - 케틀벨', equipment: '바벨/덤벨/케틀벨', isFavorite: false },
+      { id: 'fb4', partId: 'full_body', category: '복합 다관절 운동', name: '복합 다관절 운동: 스러스터 - 덤벨/바벨', equipment: '바벨/덤벨/케틀벨', isFavorite: false },
+      { id: 'fb5', partId: 'full_body', category: '복합 다관절 운동', name: '복합 다관절 운동: 버피(맨몸)', equipment: '바벨/덤벨/케틀벨', isFavorite: false },
+      { id: 'fb6', partId: 'full_body', category: '복합 다관절 운동', name: '복합 다관절 운동: 맨메이커 - 덤벨', equipment: '바벨/덤벨/케틀벨', isFavorite: false },
 
       // 유산소
-      { id: 'cd1', partId: 'cardio', category: '러닝', name: '런닝머신 (트레드밀)', equipment: '머신', isFavorite: false },
-      { id: 'cd2', partId: 'cardio', category: '사이클', name: '실내 사이클', equipment: '머신', isFavorite: false },
+      { id: 'cd1', partId: 'cardio', category: '달리기/걷기', name: '달리기/걷기: 트레드밀 러닝(평지)', equipment: '트레드밀', isFavorite: false },
+      { id: 'cd2', partId: 'cardio', category: '달리기/걷기', name: '달리기/걷기: 트레드밀 러닝(경사)', equipment: '트레드밀', isFavorite: false },
+      { id: 'cd3', partId: 'cardio', category: '달리기/걷기', name: '달리기/걷기: 트레드밀 파워워킹', equipment: '트레드밀', isFavorite: false },
+      { id: 'cd4', partId: 'cardio', category: '달리기/걷기', name: '달리기/걷기: 야외 러닝', equipment: '트레드밀', isFavorite: false },
+      { id: 'cd5', partId: 'cardio', category: '사이클', name: '사이클: 사이클 머신(고정형)', equipment: '사이클머신', isFavorite: false },
+      { id: 'cd6', partId: 'cardio', category: '사이클', name: '사이클: 스피닝 바이크', equipment: '사이클머신', isFavorite: false },
+      { id: 'cd7', partId: 'cardio', category: '사이클', name: '사이클: 에어바이크(팬바이크)', equipment: '사이클머신', isFavorite: false },
+      { id: 'cd8', partId: 'cardio', category: '로잉/일립티컬', name: '로잉/일립티컬: 로잉머신', equipment: '머신', isFavorite: false },
+      { id: 'cd9', partId: 'cardio', category: '로잉/일립티컬', name: '로잉/일립티컬: 일립티컬(크로스트레이너)', equipment: '머신', isFavorite: false },
+      { id: 'cd10', partId: 'cardio', category: '로잉/일립티컬', name: '로잉/일립티컬: 스텝밀(계단오르기 머신)', equipment: '머신', isFavorite: false },
+      { id: 'cd11', partId: 'cardio', category: '줄넘기', name: '줄넘기: 기본 줄넘기', equipment: '줄넘기', isFavorite: false },
+      { id: 'cd12', partId: 'cardio', category: '줄넘기', name: '줄넘기: 더블언더(2단뛰기)', equipment: '줄넘기', isFavorite: false },
     ];
 
     const INITIAL_LOGS = {
@@ -237,7 +427,9 @@
       '2026-08-29': {
         durationMinutes: 86,
         totalSets: 34,
-        breakdown: { '등': 25, '이두': 5, '전완': 4 }
+        breakdown: { '등': 25, '이두': 5, '전완': 4 },
+        routineName: '등',
+        routineColor: ROUTINE_COLORS[0]
       },
       '2026-08-30': {
         durationMinutes: 58,
@@ -345,10 +537,12 @@
           const bp = BODY_PARTS.find(p => p.id === ex.partId);
           return bp ? bp.name : '';
         }).filter(Boolean))];
+        const color = ROUTINE_COLORS[routines.length % ROUTINE_COLORS.length];
         const newRoutine = {
           id: `r_${Date.now()}`,
           name,
           partSummary: partNames.join(', '),
+          color,
           exercises: exercises.map(ex => ({ id: ex.id, partId: ex.partId, name: ex.name, category: ex.category, equipment: ex.equipment })),
           createdAt: new Date().toISOString().slice(0, 10)
         };
@@ -555,7 +749,9 @@
           [selectedDate]: {
             durationMinutes: 60,
             totalSets: formattedExercises.reduce((sum, e) => sum + e.sets.length, 0),
-            breakdown: { '운동완수': formattedExercises.length },
+            breakdown: computeBreakdown(formattedExercises),
+            routineName: null,
+            routineColor: null,
             exercises: formattedExercises
           }
         }));
@@ -566,7 +762,7 @@
         navigatePush();
       };
 
-      // 루틴을 선택 날짜에 바로 적용
+      // 루틴을 선택 날짜에 바로 적용 (루틴 이름/색상을 캘린더 뱃지로 표시)
       const handleApplyRoutineToDate = (routine, targetDate) => {
         const formattedExercises = formatExercisesForSession(routine.exercises);
         const newSession = { date: targetDate, exercises: formattedExercises };
@@ -576,7 +772,9 @@
           [targetDate]: {
             durationMinutes: 60,
             totalSets: formattedExercises.reduce((sum, e) => sum + e.sets.length, 0),
-            breakdown: { '운동완수': formattedExercises.length },
+            breakdown: computeBreakdown(formattedExercises),
+            routineName: routine.name,
+            routineColor: routine.color,
             exercises: formattedExercises
           }
         }));
@@ -600,10 +798,28 @@
           [activeSession.date]: {
             ...(prev[activeSession.date] || {}),
             totalSets: updatedExercises.reduce((sum, e) => sum + e.sets.length, 0),
+            breakdown: computeBreakdown(updatedExercises),
             exercises: updatedExercises
           }
         }));
         setIsAddExerciseModalOpen(false);
+      };
+
+      // 운동 순서 변경 (별도 목록 화면에서 롱탭/드래그 또는 화살표로 조정)
+      const handleReorderExercises = (newOrderExercises) => {
+        if (!activeSession) return;
+        const currentId = activeSession.exercises[currentExIndex] && activeSession.exercises[currentExIndex].id;
+        const updatedSession = { ...activeSession, exercises: newOrderExercises };
+        setActiveSession(updatedSession);
+        setWorkoutLogs(prev => ({
+          ...prev,
+          [activeSession.date]: {
+            ...(prev[activeSession.date] || {}),
+            exercises: newOrderExercises
+          }
+        }));
+        const newIdx = newOrderExercises.findIndex(e => e.id === currentId);
+        setCurrentExIndex(newIdx >= 0 ? newIdx : 0);
       };
 
       // 날짜 롱탭 → 복사 / 이동 / 삭제
@@ -723,6 +939,7 @@
               onOpenAddExercise={() => { setIsAddExerciseModalOpen(true); navigatePush(); }}
               onOpenExerciseInfo={(ex) => { setExerciseInfoTarget(ex); navigatePush(); }}
               onSaveRoutine={handleSaveRoutine}
+              onReorderExercises={handleReorderExercises}
               timerActive={timerActive}
               timerTotal={timerTotal}
               timerRemaining={timerRemaining}
@@ -934,7 +1151,7 @@
                     onMouseDown={() => dateStr && handleDayPressStart(dateStr, !!log)}
                     onMouseUp={handleDayPressEnd}
                     onMouseLeave={handleDayPressEnd}
-                    className={`p-1 flex flex-col justify-between cursor-pointer transition-colors relative min-h-[55px] ${
+                    className={`p-1 flex flex-col justify-between cursor-pointer transition-colors relative min-h-[92px] ${
                       !item.isCurrentMonth ? 'bg-[#151518] text-gray-500' : 'bg-[#1A1A1A] text-gray-300'
                     } ${isSelected ? 'ring-2 ring-blue-500 bg-[#222834]' : 'hover:bg-[#222222]'}`}
                   >
@@ -942,13 +1159,25 @@
                       <span className={`text-xs font-semibold ${item.isCurrentMonth ? 'text-gray-200' : 'text-gray-500'}`}>
                         {item.day}
                       </span>
-                      {log && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>}
+                      {log && !log.routineName && <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>}
                     </div>
 
                     {log && (
-                      <div className="mt-0.5 bg-[#252A36] border border-blue-900/40 rounded p-1 text-[9px] space-y-0.5 leading-tight overflow-hidden">
-                        <div className="text-blue-300 font-medium">{log.durationMinutes}분</div>
-                        <div className="text-gray-400">{log.totalSets}세트</div>
+                      <div className="mt-0.5 space-y-0.5 leading-tight overflow-hidden">
+                        {log.routineName && (
+                          <div className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-bold ${log.routineColor ? log.routineColor.bg : 'bg-blue-600'} ${log.routineColor ? log.routineColor.text : 'text-white'}`}>
+                            {log.routineName}
+                          </div>
+                        )}
+                        <div className="bg-[#252A36] border border-blue-900/40 rounded p-1 text-[9px] space-y-0.5">
+                          <div className="flex justify-between items-center">
+                            <span className="text-blue-300 font-medium">{log.durationMinutes}분</span>
+                            <span className="text-gray-400">{log.totalSets}세트</span>
+                          </div>
+                          {log.breakdown && Object.entries(log.breakdown).slice(0, 3).map(([part, count]) => (
+                            <div key={part} className="text-gray-400 truncate">{part} {count}</div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1386,8 +1615,8 @@
                         }`}
                       >
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-lg bg-[#282828] flex items-center justify-center text-xl">
-                            🏋️
+                          <div className="w-10 h-10 rounded-lg bg-[#282828] flex items-center justify-center flex-shrink-0">
+                            <Icon name={getExerciseIconName(ex.equipment, ex.name)} className="w-5 h-5 text-blue-300" />
                           </div>
                           <div>
                             <div className="font-bold text-sm text-gray-100">{ex.name}</div>
@@ -1483,6 +1712,7 @@
       onOpenAddExercise,
       onOpenExerciseInfo,
       onSaveRoutine,
+      onReorderExercises,
       timerActive,
       timerTotal,
       timerRemaining,
@@ -1496,6 +1726,7 @@
       const touchStartXRef = useRef(null);
       const [editingField, setEditingField] = useState(null); // { setIdx, field }
       const [editingValue, setEditingValue] = useState('');
+      const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
 
       // 오늘 운동 조합 전체를 하나의 루틴으로 저장 (하루 운동 세트 구성)
       const onSaveCurrentAsRoutine = () => {
@@ -1582,7 +1813,10 @@
           >
             <div className="flex justify-between items-center text-[11px] text-gray-500 border-b border-gray-800/60 pb-1">
               <span>👈 좌우 스와이프로 운동 전환</span>
-              <span>{currentExIndex + 1} / {activeSession.exercises.length}</span>
+              <button onClick={() => setIsOrderModalOpen(true)} className="flex items-center space-x-1 text-gray-300 hover:text-blue-400">
+                <span>{currentExIndex + 1} / {activeSession.exercises.length}</span>
+                <Icon name="list" className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             <div>
@@ -1795,6 +2029,138 @@
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* 운동 순서 조정 모달 (별도 목록 화면에서 롱탭 드래그 또는 화살표로 순서 변경) */}
+          {isOrderModalOpen && (
+            <ExerciseOrderModal
+              exercises={activeSession.exercises}
+              onClose={() => setIsOrderModalOpen(false)}
+              onSelectExercise={(idx) => { setCurrentExIndex(idx); setIsOrderModalOpen(false); }}
+              onReorder={(newOrder) => { onReorderExercises(newOrder); }}
+            />
+          )}
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // 운동 순서 조정 화면 (운동별 목록을 롱탭+드래그 또는 화살표 버튼으로 순서 변경)
+    // ============================================================================
+    function ExerciseOrderModal({ exercises, onClose, onSelectExercise, onReorder }) {
+      const [order, setOrder] = useState(exercises);
+      const [draggingIdx, setDraggingIdx] = useState(null);
+      const [dragOverIdx, setDragOverIdx] = useState(null);
+      const rowRefs = useRef([]);
+      const longPressTimerRef = useRef(null);
+      const activeDragIdxRef = useRef(null);
+
+      const commitOrder = (newOrder) => {
+        setOrder(newOrder);
+        onReorder(newOrder);
+      };
+
+      const moveItem = (fromIdx, toIdx) => {
+        if (toIdx < 0 || toIdx >= order.length || fromIdx === toIdx) return;
+        const next = [...order];
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+        commitOrder(next);
+      };
+
+      // 롱탭으로 드래그 모드 진입 (터치)
+      const handleTouchStart = (idx) => {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = setTimeout(() => {
+          activeDragIdxRef.current = idx;
+          setDraggingIdx(idx);
+          if (navigator.vibrate) navigator.vibrate(40);
+        }, 350);
+      };
+
+      const handleTouchMove = (e) => {
+        if (activeDragIdxRef.current === null) return;
+        const touch = e.touches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const rowEl = el && el.closest && el.closest('[data-order-idx]');
+        if (rowEl) {
+          const overIdx = Number(rowEl.getAttribute('data-order-idx'));
+          if (!Number.isNaN(overIdx)) setDragOverIdx(overIdx);
+        }
+      };
+
+      const handleTouchEnd = () => {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        if (activeDragIdxRef.current !== null && dragOverIdx !== null && dragOverIdx !== activeDragIdxRef.current) {
+          moveItem(activeDragIdxRef.current, dragOverIdx);
+        }
+        activeDragIdxRef.current = null;
+        setDraggingIdx(null);
+        setDragOverIdx(null);
+      };
+
+      const handleTouchCancel = () => {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        activeDragIdxRef.current = null;
+        setDraggingIdx(null);
+        setDragOverIdx(null);
+      };
+
+      return (
+        <div className="fixed inset-0 bg-[#121212] z-50 flex flex-col">
+          <div className="p-3 bg-[#1E1E1E] border-b border-gray-800 flex items-center justify-between flex-shrink-0">
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-white">
+              <Icon name="chevron-left" className="w-6 h-6" />
+            </button>
+            <span className="text-sm font-bold text-gray-200">운동 순서 조정</span>
+            <button onClick={onClose} className="p-1 text-blue-400 font-bold text-sm">완료</button>
+          </div>
+
+          <div className="px-4 pt-3 pb-1 text-[11px] text-gray-500 flex-shrink-0">
+            👆 항목을 길게 눌러 드래그하거나, 화살표 버튼으로 순서를 바꿔보세요.
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {order.map((ex, idx) => (
+              <div
+                key={ex.id}
+                data-order-idx={idx}
+                ref={(el) => { rowRefs.current[idx] = el; }}
+                onTouchStart={() => handleTouchStart(idx)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+                className={`flex items-center justify-between rounded-xl border p-3 transition-all ${
+                  draggingIdx === idx
+                    ? 'bg-[#1E293B] border-blue-500 scale-[1.02] shadow-lg'
+                    : dragOverIdx === idx && draggingIdx !== null
+                    ? 'bg-[#242424] border-blue-700/60'
+                    : 'bg-[#1E1E1E] border-gray-800/80'
+                }`}
+              >
+                <div className="flex items-center space-x-3 flex-1 min-w-0" onClick={() => onSelectExercise(idx)}>
+                  <Icon name="grip-vertical" className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  <span className="text-xs font-mono text-blue-400 font-bold flex-shrink-0">{idx + 1}</span>
+                  <span className="text-sm font-semibold text-gray-100 truncate">{ex.name}</span>
+                </div>
+                <div className="flex items-center space-x-1 flex-shrink-0">
+                  <button
+                    onClick={() => moveItem(idx, idx - 1)}
+                    disabled={idx === 0}
+                    className="p-1.5 text-gray-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <Icon name="chevron-up" className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => moveItem(idx, idx + 1)}
+                    disabled={idx === order.length - 1}
+                    className="p-1.5 text-gray-400 hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+                  >
+                    <Icon name="chevron-down" className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       );
