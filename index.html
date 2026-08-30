@@ -312,9 +312,9 @@
       }
     };
 
-    // 짧은 카운트다운 진동 (초읽기용)
-    const vibrateTick = () => {
-      if (navigator.vibrate) navigator.vibrate(60);
+    // 카운트다운 진동 (초읽기용) - duration(ms) 지정 가능
+    const vibrateTick = (duration = 200) => {
+      if (navigator.vibrate) navigator.vibrate(duration);
     };
 
     // ============================================================================
@@ -422,10 +422,10 @@
 
           setTimerRemaining(remainingSec);
 
-          // 종료 10초 전 + 3,2,1초 전 진동 (한 번씩만)
+          // 종료 10초 전(길게) + 3,2,1초 전(강하게) 진동 (한 번씩만)
           if ([10, 3, 2, 1].includes(remainingSec) && !vibratedTicksRef.current.has(remainingSec)) {
             vibratedTicksRef.current.add(remainingSec);
-            vibrateTick();
+            vibrateTick(remainingSec === 10 ? 450 : 300);
           }
 
           if (remainingSec <= 0) {
@@ -722,6 +722,7 @@
               onOpenReplace={() => { setIsReplaceModalOpen(true); navigatePush(); }}
               onOpenAddExercise={() => { setIsAddExerciseModalOpen(true); navigatePush(); }}
               onOpenExerciseInfo={(ex) => { setExerciseInfoTarget(ex); navigatePush(); }}
+              onSaveRoutine={handleSaveRoutine}
               timerActive={timerActive}
               timerTotal={timerTotal}
               timerRemaining={timerRemaining}
@@ -1481,6 +1482,7 @@
       onOpenReplace,
       onOpenAddExercise,
       onOpenExerciseInfo,
+      onSaveRoutine,
       timerActive,
       timerTotal,
       timerRemaining,
@@ -1494,6 +1496,13 @@
       const touchStartXRef = useRef(null);
       const [editingField, setEditingField] = useState(null); // { setIdx, field }
       const [editingValue, setEditingValue] = useState('');
+
+      // 오늘 운동 조합 전체를 하나의 루틴으로 저장 (하루 운동 세트 구성)
+      const onSaveCurrentAsRoutine = () => {
+        if (!activeSession.exercises || activeSession.exercises.length === 0) return;
+        const name = prompt('루틴 이름을 입력하세요 (예: 등, 이두)');
+        if (name && name.trim()) onSaveRoutine(name.trim(), activeSession.exercises);
+      };
 
       const handleTouchStart = (e) => {
         touchStartXRef.current = e.touches[0].clientX;
@@ -1540,8 +1549,8 @@
             </button>
             <span className="text-sm font-bold text-gray-200">{activeSession.date} 운동 기록</span>
             <div className="flex items-center space-x-3">
-              <button onClick={onOpenAddExercise} className="text-xs font-bold text-gray-200 bg-[#282828] px-2 py-1 rounded-md hover:bg-[#333333]">
-                운동추가
+              <button onClick={onSaveCurrentAsRoutine} className="text-xs font-bold text-gray-200 bg-[#282828] px-2 py-1 rounded-md hover:bg-[#333333]">
+                루틴저장
               </button>
               <button onClick={onBack} className="p-1 text-blue-400 font-bold text-sm">완료</button>
             </div>
@@ -1584,7 +1593,10 @@
                     <Icon name="info" className="w-4 h-4" />
                   </button>
                 </div>
-                <button onClick={onOpenReplace} className="text-xs text-blue-400 font-bold hover:underline flex-shrink-0">교체</button>
+                <div className="flex items-center space-x-3 flex-shrink-0">
+                  <button onClick={onOpenAddExercise} className="text-xs text-blue-400 font-bold hover:underline">운동추가</button>
+                  <button onClick={onOpenReplace} className="text-xs text-blue-400 font-bold hover:underline">교체</button>
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 mt-3 bg-[#1E1E1E] p-3 rounded-xl border border-gray-800">
