@@ -510,26 +510,63 @@
     };
 
     // ============================================================================
+    // 로컬 저장소 연동 (앱 재시작/새로고침 후에도 운동기록·루틴·즐겨찾기 유지)
+    // ============================================================================
+    const STORAGE_PREFIX = 'fitnessApp_v1_';
+
+    const loadStorage = (key, fallback) => {
+      try {
+        const raw = localStorage.getItem(STORAGE_PREFIX + key);
+        if (raw === null || raw === undefined) return fallback;
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error('localStorage 읽기 실패:', key, e);
+        return fallback;
+      }
+    };
+
+    const saveStorage = (key, value) => {
+      try {
+        localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+      } catch (e) {
+        console.error('localStorage 저장 실패:', key, e);
+      }
+    };
+
+    // ============================================================================
     // 메인 App 컴포넌트
     // ============================================================================
     function App() {
       const [currentView, setCurrentView] = useState('calendar');
       const [selectedDate, setSelectedDate] = useState('2026-08-26');
-      const [workoutLogs, setWorkoutLogs] = useState(INITIAL_LOGS);
+      // 운동기록: 최초 로드 시 저장된 기록이 있으면 그것을, 없으면 샘플 데이터를 사용
+      const [workoutLogs, setWorkoutLogs] = useState(() => loadStorage('workoutLogs', INITIAL_LOGS));
 
       const [stagedExercises, setStagedExercises] = useState([]);
       const [activeSession, setActiveSession] = useState(null);
       const [currentExIndex, setCurrentExIndex] = useState(0);
 
-      // 운동 DB (즐겨찾기 토글 가능하도록 상태로 관리)
-      const [exerciseDb, setExerciseDb] = useState(() => EXERCISE_DATABASE_SEED.map(e => ({ ...e })));
+      // 운동 DB (즐겨찾기 토글 가능하도록 상태로 관리, 즐겨찾기 상태도 저장)
+      const [exerciseDb, setExerciseDb] = useState(() => {
+        const saved = loadStorage('exerciseDb', null);
+        if (saved && Array.isArray(saved) && saved.length === EXERCISE_DATABASE_SEED.length) {
+          return saved;
+        }
+        // 저장된 DB가 없거나 운동 목록이 업데이트된 경우 시드 데이터 사용
+        return EXERCISE_DATABASE_SEED.map(e => ({ ...e }));
+      });
 
       const handleToggleFavorite = (exerciseId) => {
         setExerciseDb(prev => prev.map(e => e.id === exerciseId ? { ...e, isFavorite: !e.isFavorite } : e));
       };
 
-      // 루틴(템플릿) 상태
-      const [routines, setRoutines] = useState([]);
+      // 루틴(템플릿) 상태 - 저장된 루틴 복원
+      const [routines, setRoutines] = useState(() => loadStorage('routines', []));
+
+      // 상태 변경 시마다 자동으로 로컬 저장소에 반영
+      useEffect(() => { saveStorage('workoutLogs', workoutLogs); }, [workoutLogs]);
+      useEffect(() => { saveStorage('routines', routines); }, [routines]);
+      useEffect(() => { saveStorage('exerciseDb', exerciseDb); }, [exerciseDb]);
 
       const handleSaveRoutine = (name, exercises) => {
         if (!name || exercises.length === 0) return;
