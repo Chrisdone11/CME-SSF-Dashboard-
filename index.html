@@ -126,101 +126,101 @@
       { id: 'cardio', name: '유산소', icon: '🏃‍♂️' },
     ];
 
-    // CSV 파일 데이터 기반 대량 수집 운동 DB
-    const EXERCISE_DATABASE = [
+    // CSV 파일 데이터 기반 대량 수집 운동 DB (즐겨찾기는 사용자가 직접 ☆ 터치로 추가)
+    const EXERCISE_DATABASE_SEED = [
       // 가슴
-      { id: 'c1', partId: 'chest', category: '벤치프레스', name: '플랫 - 바벨 벤치프레스', equipment: '바벨', isFavorite: true },
-      { id: 'c2', partId: 'chest', category: '벤치프레스', name: '플랫 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: true },
+      { id: 'c1', partId: 'chest', category: '벤치프레스', name: '플랫 - 바벨 벤치프레스', equipment: '바벨', isFavorite: false },
+      { id: 'c2', partId: 'chest', category: '벤치프레스', name: '플랫 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: false },
       { id: 'c3', partId: 'chest', category: '벤치프레스', name: '플랫 - 스미스머신 벤치프레스', equipment: '스미스머신', isFavorite: false },
-      { id: 'c4', partId: 'chest', category: '벤치프레스', name: '인클라인 - 바벨 벤치프레스', equipment: '바벨', isFavorite: true },
-      { id: 'c5', partId: 'chest', category: '벤치프레스', name: '인클라인 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: true },
+      { id: 'c4', partId: 'chest', category: '벤치프레스', name: '인클라인 - 바벨 벤치프레스', equipment: '바벨', isFavorite: false },
+      { id: 'c5', partId: 'chest', category: '벤치프레스', name: '인클라인 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: false },
       { id: 'c6', partId: 'chest', category: '벤치프레스', name: '인클라인 - 스미스머신 벤치프레스', equipment: '스미스머신', isFavorite: false },
       { id: 'c7', partId: 'chest', category: '벤치프레스', name: '디클라인 - 바벨 벤치프레스', equipment: '바벨', isFavorite: false },
       { id: 'c8', partId: 'chest', category: '벤치프레스', name: '디클라인 - 덤벨 벤치프레스', equipment: '덤벨', isFavorite: false },
-      { id: 'c9', partId: 'chest', category: '체스트프레스', name: '체스트프레스 (머신)', equipment: '머신', isFavorite: true },
-      { id: 'c10', partId: 'chest', category: '체스트프레스', name: '인클라인 체스트프레스 (머신)', equipment: '머신', isFavorite: true },
+      { id: 'c9', partId: 'chest', category: '체스트프레스', name: '체스트프레스 (머신)', equipment: '머신', isFavorite: false },
+      { id: 'c10', partId: 'chest', category: '체스트프레스', name: '인클라인 체스트프레스 (머신)', equipment: '머신', isFavorite: false },
       { id: 'c11', partId: 'chest', category: '체스트프레스', name: '디클라인 체스트프레스 (머신)', equipment: '머신', isFavorite: false },
-      { id: 'c12', partId: 'chest', category: '플라이', name: '펙덱플라이 (머신)', equipment: '머신', isFavorite: true },
+      { id: 'c12', partId: 'chest', category: '플라이', name: '펙덱플라이 (머신)', equipment: '머신', isFavorite: false },
       { id: 'c13', partId: 'chest', category: '플라이', name: '덤벨 플라이 (플랫/인클라인)', equipment: '덤벨', isFavorite: false },
-      { id: 'c14', partId: 'chest', category: '플라이', name: '케이블 크로스오버 (하이투로우)', equipment: '케이블', isFavorite: true },
+      { id: 'c14', partId: 'chest', category: '플라이', name: '케이블 크로스오버 (하이투로우)', equipment: '케이블', isFavorite: false },
       { id: 'c15', partId: 'chest', category: '플라이', name: '케이블 크로스오버 (로우투하이)', equipment: '케이블', isFavorite: false },
-      { id: 'c16', partId: 'chest', category: '딥스/맨몸', name: '딥스 (가슴타겟)', equipment: '맨몸', isFavorite: true },
+      { id: 'c16', partId: 'chest', category: '딥스/맨몸', name: '딥스 (가슴타겟)', equipment: '맨몸', isFavorite: false },
       { id: 'c17', partId: 'chest', category: '딥스/맨몸', name: '푸시업 (맨몸/디클라인)', equipment: '맨몸', isFavorite: false },
 
       // 등
-      { id: 'k1', partId: 'back', category: '풀다운/풀업', name: '랫풀다운 (와이드그립)', equipment: '케이블', isFavorite: true },
-      { id: 'k2', partId: 'back', category: '풀다운/풀업', name: '랫풀다운 (클로즈/패러렐)', equipment: '케이블', isFavorite: true },
-      { id: 'k3', partId: 'back', category: '풀다운/풀업', name: '풀업 (턱걸이)', equipment: '맨몸', isFavorite: true },
+      { id: 'k1', partId: 'back', category: '풀다운/풀업', name: '랫풀다운 (와이드그립)', equipment: '케이블', isFavorite: false },
+      { id: 'k2', partId: 'back', category: '풀다운/풀업', name: '랫풀다운 (클로즈/패러렐)', equipment: '케이블', isFavorite: false },
+      { id: 'k3', partId: 'back', category: '풀다운/풀업', name: '풀업 (턱걸이)', equipment: '맨몸', isFavorite: false },
       { id: 'k4', partId: 'back', category: '풀다운/풀업', name: '친업 (언더그립 턱걸이)', equipment: '맨몸', isFavorite: false },
-      { id: 'k5', partId: 'back', category: '로우', name: '바벨로우 (오버/언더그립)', equipment: '바벨', isFavorite: true },
-      { id: 'k6', partId: 'back', category: '로우', name: '덤벨로우 (원암/양손)', equipment: '덤벨', isFavorite: true },
-      { id: 'k7', partId: 'back', category: '로우', name: '시티드 케이블로우', equipment: '케이블', isFavorite: true },
-      { id: 'k8', partId: 'back', category: '로우', name: 'T바로우 (머신/바벨)', equipment: '머신', isFavorite: true },
-      { id: 'k9', partId: 'back', category: '데드리프트', name: '컨벤셔널 데드리프트', equipment: '바벨', isFavorite: true },
-      { id: 'k10', partId: 'back', category: '데드리프트', name: '루마니안 데드리프트', equipment: '바벨', isFavorite: true },
+      { id: 'k5', partId: 'back', category: '로우', name: '바벨로우 (오버/언더그립)', equipment: '바벨', isFavorite: false },
+      { id: 'k6', partId: 'back', category: '로우', name: '덤벨로우 (원암/양손)', equipment: '덤벨', isFavorite: false },
+      { id: 'k7', partId: 'back', category: '로우', name: '시티드 케이블로우', equipment: '케이블', isFavorite: false },
+      { id: 'k8', partId: 'back', category: '로우', name: 'T바로우 (머신/바벨)', equipment: '머신', isFavorite: false },
+      { id: 'k9', partId: 'back', category: '데드리프트', name: '컨벤셔널 데드리프트', equipment: '바벨', isFavorite: false },
+      { id: 'k10', partId: 'back', category: '데드리프트', name: '루마니안 데드리프트', equipment: '바벨', isFavorite: false },
 
       // 어깨
-      { id: 's1', partId: 'shoulders', category: '오버헤드프레스', name: '오버헤드프레스 (OHP - 바벨)', equipment: '바벨', isFavorite: true },
-      { id: 's2', partId: 'shoulders', category: '오버헤드프레스', name: '덤벨 숄더프레스', equipment: '덤벨', isFavorite: true },
-      { id: 's3', partId: 'shoulders', category: '오버헤드프레스', name: '스미스머신 숄더프레스', equipment: '스미스머신', isFavorite: true },
-      { id: 's4', partId: 'shoulders', category: '오버헤드프레스', name: '숄더프레스 머신', equipment: '머신', isFavorite: true },
-      { id: 's5', partId: 'shoulders', category: '측면레이즈', name: '사이드 라테럴레이즈 (덤벨)', equipment: '덤벨', isFavorite: true },
-      { id: 's6', partId: 'shoulders', category: '측면레이즈', name: '케이블 라테럴레이즈', equipment: '케이블', isFavorite: true },
-      { id: 's7', partId: 'shoulders', category: '측면레이즈', name: '머신 라테럴레이즈', equipment: '머신', isFavorite: true },
-      { id: 's8', partId: 'shoulders', category: '후면레이즈', name: '리버스 펙덱플라이 (후면)', equipment: '머신', isFavorite: true },
+      { id: 's1', partId: 'shoulders', category: '오버헤드프레스', name: '오버헤드프레스 (OHP - 바벨)', equipment: '바벨', isFavorite: false },
+      { id: 's2', partId: 'shoulders', category: '오버헤드프레스', name: '덤벨 숄더프레스', equipment: '덤벨', isFavorite: false },
+      { id: 's3', partId: 'shoulders', category: '오버헤드프레스', name: '스미스머신 숄더프레스', equipment: '스미스머신', isFavorite: false },
+      { id: 's4', partId: 'shoulders', category: '오버헤드프레스', name: '숄더프레스 머신', equipment: '머신', isFavorite: false },
+      { id: 's5', partId: 'shoulders', category: '측면레이즈', name: '사이드 라테럴레이즈 (덤벨)', equipment: '덤벨', isFavorite: false },
+      { id: 's6', partId: 'shoulders', category: '측면레이즈', name: '케이블 라테럴레이즈', equipment: '케이블', isFavorite: false },
+      { id: 's7', partId: 'shoulders', category: '측면레이즈', name: '머신 라테럴레이즈', equipment: '머신', isFavorite: false },
+      { id: 's8', partId: 'shoulders', category: '후면레이즈', name: '리버스 펙덱플라이 (후면)', equipment: '머신', isFavorite: false },
       { id: 's9', partId: 'shoulders', category: '후면레이즈', name: '벤트오버 덤벨레이즈', equipment: '덤벨', isFavorite: false },
 
       // 삼두
-      { id: 't1', partId: 'triceps', category: '푸시다운', name: '케이블 트라이셉스 푸시다운 (일자바)', equipment: '케이블', isFavorite: true },
-      { id: 't2', partId: 'triceps', category: '푸시다운', name: '케이블 트라이셉스 푸시다운 (로프)', equipment: '케이블', isFavorite: true },
-      { id: 't3', partId: 'triceps', category: '익스텐션', name: '라잉 트라이셉스 익스텐션 (라트익)', equipment: '바벨', isFavorite: true },
+      { id: 't1', partId: 'triceps', category: '푸시다운', name: '케이블 트라이셉스 푸시다운 (일자바)', equipment: '케이블', isFavorite: false },
+      { id: 't2', partId: 'triceps', category: '푸시다운', name: '케이블 트라이셉스 푸시다운 (로프)', equipment: '케이블', isFavorite: false },
+      { id: 't3', partId: 'triceps', category: '익스텐션', name: '라잉 트라이셉스 익스텐션 (라트익)', equipment: '바벨', isFavorite: false },
       { id: 't4', partId: 'triceps', category: '익스텐션', name: '오버헤드 덤벨 익스텐션', equipment: '덤벨', isFavorite: false },
 
       // 이두
-      { id: 'b1', partId: 'biceps', category: '바벨컬', name: '바벨컬 (EZ바/일자바)', equipment: '바벨', isFavorite: true },
-      { id: 'b2', partId: 'biceps', category: '덤벨컬', name: '덤벨컬 (Alternate/Simultaneous)', equipment: '덤벨', isFavorite: true },
-      { id: 'b3', partId: 'biceps', category: '해머컬', name: '해머컬 (덤벨/케이블)', equipment: '덤벨', isFavorite: true },
-      { id: 'b4', partId: 'biceps', category: '프리처컬', name: '프리처컬 (머신/EZ바)', equipment: '머신', isFavorite: true },
+      { id: 'b1', partId: 'biceps', category: '바벨컬', name: '바벨컬 (EZ바/일자바)', equipment: '바벨', isFavorite: false },
+      { id: 'b2', partId: 'biceps', category: '덤벨컬', name: '덤벨컬 (Alternate/Simultaneous)', equipment: '덤벨', isFavorite: false },
+      { id: 'b3', partId: 'biceps', category: '해머컬', name: '해머컬 (덤벨/케이블)', equipment: '덤벨', isFavorite: false },
+      { id: 'b4', partId: 'biceps', category: '프리처컬', name: '프리처컬 (머신/EZ바)', equipment: '머신', isFavorite: false },
 
       // 전완
       { id: 'f1', partId: 'forearms', category: '리스트컬', name: '바벨 리스트컬', equipment: '바벨', isFavorite: false },
       { id: 'f2', partId: 'forearms', category: '리스트컬', name: '덤벨 리버스 리스트컬', equipment: '덤벨', isFavorite: false },
 
       // 하체
-      { id: 'l1', partId: 'quads', category: '스쿼트', name: '바벨 백스쿼트', equipment: '바벨', isFavorite: true },
-      { id: 'l2', partId: 'quads', category: '스쿼트', name: '스쿼트: 스미스 머신', equipment: '스미스머신', isFavorite: true },
+      { id: 'l1', partId: 'quads', category: '스쿼트', name: '바벨 백스쿼트', equipment: '바벨', isFavorite: false },
+      { id: 'l2', partId: 'quads', category: '스쿼트', name: '스쿼트: 스미스 머신', equipment: '스미스머신', isFavorite: false },
       { id: 'l3', partId: 'quads', category: '스쿼트', name: '프론트 스쿼트', equipment: '바벨', isFavorite: false },
-      { id: 'l4', partId: 'quads', category: '레그프레스', name: '파워 레그프레스', equipment: '머신', isFavorite: true },
-      { id: 'l5', partId: 'quads', category: '익스텐션', name: '레그 익스텐션', equipment: '머신', isFavorite: true },
-      { id: 'l6', partId: 'quads', category: '레그컬', name: '라잉 레그컬', equipment: '머신', isFavorite: true },
-      { id: 'l7', partId: 'quads', category: '레그컬', name: '시티드 레그컬', equipment: '머신', isFavorite: true },
+      { id: 'l4', partId: 'quads', category: '레그프레스', name: '파워 레그프레스', equipment: '머신', isFavorite: false },
+      { id: 'l5', partId: 'quads', category: '익스텐션', name: '레그 익스텐션', equipment: '머신', isFavorite: false },
+      { id: 'l6', partId: 'quads', category: '레그컬', name: '라잉 레그컬', equipment: '머신', isFavorite: false },
+      { id: 'l7', partId: 'quads', category: '레그컬', name: '시티드 레그컬', equipment: '머신', isFavorite: false },
 
       // 종아리
-      { id: 'ca1', partId: 'calves', category: '카프레이즈', name: '스탠딩 카프레이즈', equipment: '머신', isFavorite: true },
+      { id: 'ca1', partId: 'calves', category: '카프레이즈', name: '스탠딩 카프레이즈', equipment: '머신', isFavorite: false },
       { id: 'ca2', partId: 'calves', category: '카프레이즈', name: '시티드 카프레이즈', equipment: '머신', isFavorite: false },
 
       // 복부
-      { id: 'a1', partId: 'abs', category: '크런치', name: '기본 크런치', equipment: '맨몸', isFavorite: true },
-      { id: 'a2', partId: 'abs', category: '레그레이즈', name: '행잉 레그레이즈', equipment: '철봉', isFavorite: true },
-      { id: 'a3', partId: 'abs', category: '플랭크', name: '기본 플랭크', equipment: '맨몸', isFavorite: true },
+      { id: 'a1', partId: 'abs', category: '크런치', name: '기본 크런치', equipment: '맨몸', isFavorite: false },
+      { id: 'a2', partId: 'abs', category: '레그레이즈', name: '행잉 레그레이즈', equipment: '철봉', isFavorite: false },
+      { id: 'a3', partId: 'abs', category: '플랭크', name: '기본 플랭크', equipment: '맨몸', isFavorite: false },
 
       // 승모근
-      { id: 'tr1_1', partId: 'traps', category: '슈러그', name: '바벨 슈러그', equipment: '바벨', isFavorite: true },
-      { id: 'tr1_2', partId: 'traps', category: '슈러그', name: '덤벨 슈러그', equipment: '덤벨', isFavorite: true },
+      { id: 'tr1_1', partId: 'traps', category: '슈러그', name: '바벨 슈러그', equipment: '바벨', isFavorite: false },
+      { id: 'tr1_2', partId: 'traps', category: '슈러그', name: '덤벨 슈러그', equipment: '덤벨', isFavorite: false },
 
       // 허리
-      { id: 'lb1', partId: 'lower_back', category: '익스텐션', name: '백 익스텐션: 중량', equipment: '맨몸/원반', isFavorite: true },
+      { id: 'lb1', partId: 'lower_back', category: '익스텐션', name: '백 익스텐션: 중량', equipment: '맨몸/원반', isFavorite: false },
 
       // 목
       { id: 'n1', partId: 'neck', category: '넥플렉션', name: '넥 플렉션 (맨몸/원반)', equipment: '맨몸', isFavorite: false },
 
       // 전신
-      { id: 'fb1', partId: 'full_body', category: '버피', name: '버피 테스트', equipment: '맨몸', isFavorite: true },
-      { id: 'fb2', partId: 'full_body', category: '케틀벨', name: '케틀벨 스윙', equipment: '케틀벨', isFavorite: true },
+      { id: 'fb1', partId: 'full_body', category: '버피', name: '버피 테스트', equipment: '맨몸', isFavorite: false },
+      { id: 'fb2', partId: 'full_body', category: '케틀벨', name: '케틀벨 스윙', equipment: '케틀벨', isFavorite: false },
 
       // 유산소
-      { id: 'cd1', partId: 'cardio', category: '러닝', name: '런닝머신 (트레드밀)', equipment: '머신', isFavorite: true },
-      { id: 'cd2', partId: 'cardio', category: '사이클', name: '실내 사이클', equipment: '머신', isFavorite: true },
+      { id: 'cd1', partId: 'cardio', category: '러닝', name: '런닝머신 (트레드밀)', equipment: '머신', isFavorite: false },
+      { id: 'cd2', partId: 'cardio', category: '사이클', name: '실내 사이클', equipment: '머신', isFavorite: false },
     ];
 
     const INITIAL_LOGS = {
@@ -273,29 +273,48 @@
       }
     };
 
-    const playBeepSound = () => {
+    // 복싱 라운드 종료 벨과 유사한 종소리 (금속성 배음 + 잔향)
+    const playBoxingBellSound = () => {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
         const ctx = new AudioContext();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+        const ringBell = (startDelay) => {
+          const startTime = ctx.currentTime + startDelay;
+          // 벨 특유의 금속성 배음을 위해 여러 오실레이터를 겹침
+          const partials = [
+            { freq: 880, gain: 0.35, decay: 1.1 },
+            { freq: 1320, gain: 0.22, decay: 0.9 },
+            { freq: 1760, gain: 0.14, decay: 0.7 },
+            { freq: 2640, gain: 0.08, decay: 0.5 },
+          ];
+          partials.forEach(p => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(p.freq, startTime);
+            gain.gain.setValueAtTime(0.0001, startTime);
+            gain.gain.linearRampToValueAtTime(p.gain, startTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + p.decay);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + p.decay + 0.05);
+          });
+        };
 
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start();
-        osc.stop(ctx.currentTime + 0.5);
+        // 복싱 라운드 종료처럼 두 번 연속 타종
+        ringBell(0);
+        ringBell(0.22);
       } catch (e) {
         console.error('Audio play failed', e);
       }
+    };
+
+    // 짧은 카운트다운 진동 (초읽기용)
+    const vibrateTick = () => {
+      if (navigator.vibrate) navigator.vibrate(60);
     };
 
     // ============================================================================
@@ -310,8 +329,72 @@
       const [activeSession, setActiveSession] = useState(null);
       const [currentExIndex, setCurrentExIndex] = useState(0);
 
+      // 운동 DB (즐겨찾기 토글 가능하도록 상태로 관리)
+      const [exerciseDb, setExerciseDb] = useState(() => EXERCISE_DATABASE_SEED.map(e => ({ ...e })));
+
+      const handleToggleFavorite = (exerciseId) => {
+        setExerciseDb(prev => prev.map(e => e.id === exerciseId ? { ...e, isFavorite: !e.isFavorite } : e));
+      };
+
+      // 루틴(템플릿) 상태
+      const [routines, setRoutines] = useState([]);
+
+      const handleSaveRoutine = (name, exercises) => {
+        if (!name || exercises.length === 0) return;
+        const partNames = [...new Set(exercises.map(ex => {
+          const bp = BODY_PARTS.find(p => p.id === ex.partId);
+          return bp ? bp.name : '';
+        }).filter(Boolean))];
+        const newRoutine = {
+          id: `r_${Date.now()}`,
+          name,
+          partSummary: partNames.join(', '),
+          exercises: exercises.map(ex => ({ id: ex.id, partId: ex.partId, name: ex.name, category: ex.category, equipment: ex.equipment })),
+          createdAt: new Date().toISOString().slice(0, 10)
+        };
+        setRoutines(prev => [newRoutine, ...prev]);
+      };
+
+      const handleDeleteRoutine = (routineId) => {
+        setRoutines(prev => prev.filter(r => r.id !== routineId));
+      };
+
       // 교체 모달 상태
       const [isReplaceModalOpen, setIsReplaceModalOpen] = useState(false);
+
+      // 운동 중 운동추가 모달 상태
+      const [isAddExerciseModalOpen, setIsAddExerciseModalOpen] = useState(false);
+
+      // 캘린더 루틴 적용 모달 상태
+      const [isRoutineModalOpen, setIsRoutineModalOpen] = useState(false);
+
+      // 운동 정보/히스토리/차트 모달 상태
+      const [exerciseInfoTarget, setExerciseInfoTarget] = useState(null);
+
+      // 날짜 롱탭 복사/이동/삭제 모달 상태
+      const [dateActionState, setDateActionState] = useState(null); // { date, mode: 'menu' | 'pick-target', action: 'copy' | 'move' }
+
+      // 안드로이드 뒤로가기 버튼 → 이전 단계 이동 (앱 종료 방지)
+      useEffect(() => {
+        window.history.replaceState({ app: true }, '');
+        const handlePopState = () => {
+          if (isReplaceModalOpen) { setIsReplaceModalOpen(false); window.history.pushState({ app: true }, ''); return; }
+          if (isAddExerciseModalOpen) { setIsAddExerciseModalOpen(false); window.history.pushState({ app: true }, ''); return; }
+          if (isRoutineModalOpen) { setIsRoutineModalOpen(false); window.history.pushState({ app: true }, ''); return; }
+          if (exerciseInfoTarget) { setExerciseInfoTarget(null); window.history.pushState({ app: true }, ''); return; }
+          if (dateActionState) { setDateActionState(null); window.history.pushState({ app: true }, ''); return; }
+          if (currentView === 'workout') { setCurrentView('calendar'); window.history.pushState({ app: true }, ''); return; }
+          if (currentView === 'select') { setCurrentView('calendar'); window.history.pushState({ app: true }, ''); return; }
+          // 캘린더 루트 + 모달 없음 → 실제 앱 종료 허용 (별도 처리 없음)
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+      }, [currentView, isReplaceModalOpen, isAddExerciseModalOpen, isRoutineModalOpen, exerciseInfoTarget, dateActionState]);
+
+      // 화면 전환 시 히스토리 스택에 push (뒤로가기 대응)
+      const navigatePush = () => {
+        try { window.history.pushState({ app: true }, ''); } catch (e) {}
+      };
 
       // 휴식 타이머 상태
       const [timerActive, setTimerActive] = useState(false);
@@ -320,11 +403,13 @@
       const [isMuted, setIsMuted] = useState(false);
       const timerEndTimeRef = useRef(null);
       const timerIntervalRef = useRef(null);
+      const vibratedTicksRef = useRef(new Set());
 
       const startTimer = (seconds) => {
         setTimerTotal(seconds);
         setTimerRemaining(seconds);
         setTimerActive(true);
+        vibratedTicksRef.current = new Set();
         
         const now = Date.now();
         timerEndTimeRef.current = now + seconds * 1000;
@@ -337,11 +422,17 @@
 
           setTimerRemaining(remainingSec);
 
+          // 종료 10초 전 + 3,2,1초 전 진동 (한 번씩만)
+          if ([10, 3, 2, 1].includes(remainingSec) && !vibratedTicksRef.current.has(remainingSec)) {
+            vibratedTicksRef.current.add(remainingSec);
+            vibrateTick();
+          }
+
           if (remainingSec <= 0) {
             clearInterval(timerIntervalRef.current);
             setTimerActive(false);
-            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-            if (!isMuted) playBeepSound();
+            if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
+            if (!isMuted) playBoxingBellSound();
           }
         }, 200);
       };
@@ -386,6 +477,20 @@
         setActiveSession({ ...activeSession, exercises: updatedExercises });
       };
 
+      // 무게/횟수 직접 입력 (절대값 지정)
+      const handleSetFieldDirect = (exIdx, setIdx, field, value) => {
+        if (!activeSession) return;
+        const updatedExercises = [...activeSession.exercises];
+        const targetSet = updatedExercises[exIdx].sets[setIdx];
+        const num = Number(value);
+        if (Number.isNaN(num)) return;
+
+        if (field === 'weight') targetSet.weight = Math.max(0, num);
+        if (field === 'reps') targetSet.reps = Math.max(0, Math.round(num));
+
+        setActiveSession({ ...activeSession, exercises: updatedExercises });
+      };
+
       // 세트 원버튼 삭제
       const handleDeleteSet = (exIdx, setIdx) => {
         if (!activeSession) return;
@@ -420,22 +525,25 @@
         setActiveSession({ ...activeSession, exercises: updatedExercises });
       };
 
+      // 운동 목록 → 세션용 포맷 변환 (공통 헬퍼)
+      const formatExercisesForSession = (list) => list.map(ex => ({
+        id: ex.id,
+        partId: ex.partId,
+        name: ex.name,
+        prWeight: 90,
+        prReps: 8,
+        pr1RM: 112.2,
+        sets: [
+          { setNum: 1, weight: 70, reps: 15, restSeconds: 60, completed: false },
+          { setNum: 2, weight: 75, reps: 15, restSeconds: 60, completed: false },
+          { setNum: 3, weight: 80, reps: 12, restSeconds: 60, completed: false },
+          { setNum: 4, weight: 85, reps: 9, restSeconds: 60, completed: false },
+        ]
+      }));
+
       // 대기열 운동으로 세션 시작
       const handleStartWorkoutWithStaged = () => {
-        const formattedExercises = stagedExercises.map(ex => ({
-          id: ex.id,
-          partId: ex.partId,
-          name: ex.name,
-          prWeight: 90,
-          prReps: 8,
-          pr1RM: 112.2,
-          sets: [
-            { setNum: 1, weight: 70, reps: 15, restSeconds: 60, completed: false },
-            { setNum: 2, weight: 75, reps: 15, restSeconds: 60, completed: false },
-            { setNum: 3, weight: 80, reps: 12, restSeconds: 60, completed: false },
-            { setNum: 4, weight: 85, reps: 9, restSeconds: 60, completed: false },
-          ]
-        }));
+        const formattedExercises = formatExercisesForSession(stagedExercises);
 
         const newSession = {
           date: selectedDate,
@@ -455,6 +563,75 @@
         setActiveSession(newSession);
         setCurrentExIndex(0);
         setCurrentView('workout');
+        navigatePush();
+      };
+
+      // 루틴을 선택 날짜에 바로 적용
+      const handleApplyRoutineToDate = (routine, targetDate) => {
+        const formattedExercises = formatExercisesForSession(routine.exercises);
+        const newSession = { date: targetDate, exercises: formattedExercises };
+
+        setWorkoutLogs(prev => ({
+          ...prev,
+          [targetDate]: {
+            durationMinutes: 60,
+            totalSets: formattedExercises.reduce((sum, e) => sum + e.sets.length, 0),
+            breakdown: { '운동완수': formattedExercises.length },
+            exercises: formattedExercises
+          }
+        }));
+
+        setActiveSession(newSession);
+        setCurrentExIndex(0);
+        setCurrentView('workout');
+        setIsRoutineModalOpen(false);
+        navigatePush();
+      };
+
+      // 운동 진행 중 새 운동 추가
+      const handleAddExercisesToSession = (newExercises) => {
+        if (!activeSession || newExercises.length === 0) { setIsAddExerciseModalOpen(false); return; }
+        const additions = formatExercisesForSession(newExercises);
+        const updatedExercises = [...activeSession.exercises, ...additions];
+        const updatedSession = { ...activeSession, exercises: updatedExercises };
+        setActiveSession(updatedSession);
+        setWorkoutLogs(prev => ({
+          ...prev,
+          [activeSession.date]: {
+            ...(prev[activeSession.date] || {}),
+            totalSets: updatedExercises.reduce((sum, e) => sum + e.sets.length, 0),
+            exercises: updatedExercises
+          }
+        }));
+        setIsAddExerciseModalOpen(false);
+      };
+
+      // 날짜 롱탭 → 복사 / 이동 / 삭제
+      const handleDeleteDateLog = (date) => {
+        setWorkoutLogs(prev => {
+          const next = { ...prev };
+          delete next[date];
+          return next;
+        });
+        setDateActionState(null);
+      };
+
+      const handleCopyDateLog = (fromDate, toDate) => {
+        setWorkoutLogs(prev => {
+          if (!prev[fromDate]) return prev;
+          return { ...prev, [toDate]: JSON.parse(JSON.stringify(prev[fromDate])) };
+        });
+        setDateActionState(null);
+      };
+
+      const handleMoveDateLog = (fromDate, toDate) => {
+        setWorkoutLogs(prev => {
+          if (!prev[fromDate]) return prev;
+          const next = { ...prev, [toDate]: JSON.parse(JSON.stringify(prev[fromDate])) };
+          delete next[fromDate];
+          return next;
+        });
+        setDateActionState(null);
       };
 
       // 교체 수행 핸들러
@@ -487,9 +664,20 @@
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
               workoutLogs={workoutLogs}
+              routines={routines}
+              isRoutineModalOpen={isRoutineModalOpen}
+              onOpenRoutineModal={() => { setIsRoutineModalOpen(true); navigatePush(); }}
+              onCloseRoutineModal={() => setIsRoutineModalOpen(false)}
+              onApplyRoutine={(routine) => handleApplyRoutineToDate(routine, selectedDate)}
+              dateActionState={dateActionState}
+              setDateActionState={(state) => { setDateActionState(state); if (state) navigatePush(); }}
+              onDeleteDateLog={handleDeleteDateLog}
+              onCopyDateLog={handleCopyDateLog}
+              onMoveDateLog={handleMoveDateLog}
               onOpenExerciseSelect={() => {
                 setStagedExercises([]);
                 setCurrentView('select');
+                navigatePush();
               }}
               onOpenWorkoutDetail={(date) => {
                 const dayData = workoutLogs[date];
@@ -501,12 +689,18 @@
                   setStagedExercises([]);
                   setCurrentView('select');
                 }
+                navigatePush();
               }}
             />
           )}
 
           {currentView === 'select' && (
             <MultiDepthSelectView 
+              exerciseDb={exerciseDb}
+              onToggleFavorite={handleToggleFavorite}
+              routines={routines}
+              onSaveRoutine={handleSaveRoutine}
+              onDeleteRoutine={handleDeleteRoutine}
               stagedExercises={stagedExercises}
               setStagedExercises={setStagedExercises}
               onBack={() => setCurrentView('calendar')}
@@ -522,9 +716,12 @@
               onBack={() => setCurrentView('calendar')}
               handleToggleSetComplete={handleToggleSetComplete}
               handleUpdateSetField={handleUpdateSetField}
+              handleSetFieldDirect={handleSetFieldDirect}
               handleDeleteSet={handleDeleteSet}
               handleAddSet={handleAddSet}
-              onOpenReplace={() => setIsReplaceModalOpen(true)}
+              onOpenReplace={() => { setIsReplaceModalOpen(true); navigatePush(); }}
+              onOpenAddExercise={() => { setIsAddExerciseModalOpen(true); navigatePush(); }}
+              onOpenExerciseInfo={(ex) => { setExerciseInfoTarget(ex); navigatePush(); }}
               timerActive={timerActive}
               timerTotal={timerTotal}
               timerRemaining={timerRemaining}
@@ -539,9 +736,33 @@
           {/* 운동 교체 모달 팝업 */}
           {isReplaceModalOpen && activeSession && (
             <ReplaceExerciseModal 
+              exerciseDb={exerciseDb}
               currentExercise={activeSession.exercises[currentExIndex]}
               onClose={() => setIsReplaceModalOpen(false)}
               onSelectReplace={handleReplaceExercise}
+            />
+          )}
+
+          {/* 운동 중 운동 추가 모달 */}
+          {isAddExerciseModalOpen && activeSession && (
+            <AddExerciseModal
+              exerciseDb={exerciseDb}
+              onToggleFavorite={handleToggleFavorite}
+              routines={routines}
+              onSaveRoutine={handleSaveRoutine}
+              onDeleteRoutine={handleDeleteRoutine}
+              existingIds={activeSession.exercises.map(e => e.id)}
+              onClose={() => setIsAddExerciseModalOpen(false)}
+              onComplete={handleAddExercisesToSession}
+            />
+          )}
+
+          {/* 운동 정보 / 히스토리 / 차트 모달 */}
+          {exerciseInfoTarget && (
+            <ExerciseInfoModal
+              exercise={exerciseInfoTarget}
+              workoutLogs={workoutLogs}
+              onClose={() => setExerciseInfoTarget(null)}
             />
           )}
         </div>
@@ -551,10 +772,36 @@
     // ============================================================================
     // 화면 1: 캘린더 메인 화면
     // ============================================================================
-    function CalendarView({ selectedDate, setSelectedDate, workoutLogs, onOpenExerciseSelect, onOpenWorkoutDetail }) {
+    function CalendarView({
+      selectedDate, setSelectedDate, workoutLogs, onOpenExerciseSelect, onOpenWorkoutDetail,
+      routines, isRoutineModalOpen, onOpenRoutineModal, onCloseRoutineModal, onApplyRoutine,
+      dateActionState, setDateActionState, onDeleteDateLog, onCopyDateLog, onMoveDateLog
+    }) {
       const [currentYearMonth, setCurrentYearMonth] = useState({ year: 2026, month: 8 });
       const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
       const touchStartXRef = useRef(null);
+      const longPressTimerRef = useRef(null);
+      const longPressFiredRef = useRef(false);
+      const [targetPickDate, setTargetPickDate] = useState({ year: 2026, month: 8, day: 1 });
+
+      // 날짜 롱탭 시작 (복사/이동/삭제 메뉴)
+      const handleDayPressStart = (dateStr, hasLog) => {
+        longPressFiredRef.current = false;
+        if (!hasLog) return;
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = setTimeout(() => {
+          longPressFiredRef.current = true;
+          if (navigator.vibrate) navigator.vibrate(40);
+          setDateActionState({ date: dateStr, mode: 'menu', action: null });
+        }, 500);
+      };
+      const handleDayPressEnd = () => {
+        if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+      };
+      const handleDayClick = (dateStr) => {
+        if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
+        setSelectedDate(dateStr);
+      };
 
       const formattedMonthStr = `${currentYearMonth.year}.${String(currentYearMonth.month).padStart(2, '0')}`;
 
@@ -679,7 +926,13 @@
                 return (
                   <div
                     key={idx}
-                    onClick={() => dateStr && setSelectedDate(dateStr)}
+                    onClick={() => dateStr && handleDayClick(dateStr)}
+                    onTouchStart={() => dateStr && handleDayPressStart(dateStr, !!log)}
+                    onTouchEnd={handleDayPressEnd}
+                    onTouchMove={handleDayPressEnd}
+                    onMouseDown={() => dateStr && handleDayPressStart(dateStr, !!log)}
+                    onMouseUp={handleDayPressEnd}
+                    onMouseLeave={handleDayPressEnd}
                     className={`p-1 flex flex-col justify-between cursor-pointer transition-colors relative min-h-[55px] ${
                       !item.isCurrentMonth ? 'bg-[#151518] text-gray-500' : 'bg-[#1A1A1A] text-gray-300'
                     } ${isSelected ? 'ring-2 ring-blue-500 bg-[#222834]' : 'hover:bg-[#222222]'}`}
@@ -720,6 +973,12 @@
                 오늘
               </button>
               <button 
+                onClick={onOpenRoutineModal}
+                className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200 rounded-lg active:scale-95 transition-transform"
+              >
+                루틴
+              </button>
+              <button 
                 onClick={() => onOpenWorkoutDetail(selectedDate)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white rounded-lg flex items-center space-x-1 shadow-md active:scale-95 transition-transform"
               >
@@ -728,6 +987,141 @@
               </button>
             </div>
           </div>
+
+          {/* 루틴 적용 모달 (캘린더에서 바로 루틴 불러오기) */}
+          {isRoutineModalOpen && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+              <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+                <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#252525]">
+                  <div>
+                    <h3 className="font-bold text-base text-gray-100">템플릿 선택</h3>
+                    <p className="text-xs text-blue-400">{selectedDate}에 루틴 적용</p>
+                  </div>
+                  <button onClick={onCloseRoutineModal} className="p-1 text-gray-400 hover:text-white">
+                    <Icon name="x" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {routines.length === 0 ? (
+                    <div className="text-center py-10 text-xs text-gray-500">
+                      저장된 루틴이 없습니다.<br/>운동 추가 화면에서 '루틴' 탭에 저장해보세요.
+                    </div>
+                  ) : (
+                    routines.map(r => (
+                      <div key={r.id} className="bg-[#282828] border border-gray-700/60 rounded-xl p-3">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-bold text-sm text-gray-100">{r.name}</div>
+                            <div className="text-xs text-gray-400 mt-0.5">{r.partSummary} • {r.exercises.length}개 운동</div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">{r.createdAt} 생성</div>
+                          </div>
+                          <button
+                            onClick={() => onApplyRoutine(r)}
+                            className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
+                          >
+                            적용
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 날짜 롱탭 → 복사/이동/삭제 메뉴 */}
+          {dateActionState && dateActionState.mode === 'menu' && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+              <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <h3 className="font-bold text-sm text-gray-100">{dateActionState.date}</h3>
+                  <button onClick={() => setDateActionState(null)} className="p-1 text-gray-400 hover:text-white">
+                    <Icon name="x" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => {
+                    setTargetPickDate({ year: currentYearMonth.year, month: currentYearMonth.month, day: 1 });
+                    setDateActionState({ ...dateActionState, mode: 'pick-target', action: 'copy' });
+                  }}
+                  className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-sm font-semibold text-gray-100 rounded-xl flex items-center justify-center space-x-2"
+                >
+                  <Icon name="copy" className="w-4 h-4" /> <span>다른 날짜로 복사</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setTargetPickDate({ year: currentYearMonth.year, month: currentYearMonth.month, day: 1 });
+                    setDateActionState({ ...dateActionState, mode: 'pick-target', action: 'move' });
+                  }}
+                  className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-sm font-semibold text-gray-100 rounded-xl flex items-center justify-center space-x-2"
+                >
+                  <Icon name="move" className="w-4 h-4" /> <span>다른 날짜로 이동</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm(`${dateActionState.date} 기록을 삭제할까요?`)) {
+                      onDeleteDateLog(dateActionState.date);
+                    }
+                  }}
+                  className="w-full py-2.5 bg-red-900/40 hover:bg-red-900/60 text-sm font-semibold text-red-300 rounded-xl flex items-center justify-center space-x-2"
+                >
+                  <Icon name="trash-2" className="w-4 h-4" /> <span>기록 삭제</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 복사/이동 대상 날짜 선택 */}
+          {dateActionState && dateActionState.mode === 'pick-target' && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+              <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-xs p-4 space-y-4 shadow-2xl">
+                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                  <h3 className="font-bold text-sm text-gray-100">
+                    {dateActionState.action === 'copy' ? '복사할 날짜 선택' : '이동할 날짜 선택'}
+                  </h3>
+                  <button onClick={() => setDateActionState(null)} className="p-1 text-gray-400 hover:text-white">
+                    <Icon name="x" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <select
+                    value={targetPickDate.year}
+                    onChange={(e) => setTargetPickDate({ ...targetPickDate, year: Number(e.target.value) })}
+                    className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none"
+                  >
+                    {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}년</option>)}
+                  </select>
+                  <select
+                    value={targetPickDate.month}
+                    onChange={(e) => setTargetPickDate({ ...targetPickDate, month: Number(e.target.value) })}
+                    className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
+                  </select>
+                  <select
+                    value={targetPickDate.day}
+                    onChange={(e) => setTargetPickDate({ ...targetPickDate, day: Number(e.target.value) })}
+                    className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none"
+                  >
+                    {Array.from({ length: new Date(targetPickDate.year, targetPickDate.month, 0).getDate() }, (_, i) => i + 1).map(d => (
+                      <option key={d} value={d}>{d}일</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={() => {
+                    const toDate = `${targetPickDate.year}-${String(targetPickDate.month).padStart(2, '0')}-${String(targetPickDate.day).padStart(2, '0')}`;
+                    if (dateActionState.action === 'copy') onCopyDateLog(dateActionState.date, toDate);
+                    else onMoveDateLog(dateActionState.date, toDate);
+                  }}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-colors"
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          )}
 
           {isMonthPickerOpen && (
             <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
@@ -783,18 +1177,61 @@
     // ============================================================================
     // 화면 2: Multi-Depth 운동 선택 시스템
     // ============================================================================
-    function MultiDepthSelectView({ stagedExercises, setStagedExercises, onBack, onComplete }) {
+    function MultiDepthSelectView({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onDeleteRoutine, stagedExercises, setStagedExercises, onBack, onComplete }) {
+      return (
+        <ExercisePickerBody
+          exerciseDb={exerciseDb}
+          onToggleFavorite={onToggleFavorite}
+          routines={routines}
+          onSaveRoutine={onSaveRoutine}
+          onDeleteRoutine={onDeleteRoutine}
+          stagedExercises={stagedExercises}
+          setStagedExercises={setStagedExercises}
+          onBack={onBack}
+          onComplete={onComplete}
+          completeLabel="선택 완료"
+        />
+      );
+    }
+
+    // ============================================================================
+    // 운동 중 '운동추가' 모달 (동일 운동 선택 UI를 오버레이로 재사용)
+    // ============================================================================
+    function AddExerciseModal({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onDeleteRoutine, existingIds, onClose, onComplete }) {
+      const [localStaged, setLocalStaged] = useState([]);
+      return (
+        <div className="fixed inset-0 bg-[#121212] z-50 flex flex-col">
+          <ExercisePickerBody
+            exerciseDb={exerciseDb.filter(ex => !existingIds.includes(ex.id))}
+            onToggleFavorite={onToggleFavorite}
+            routines={routines}
+            onSaveRoutine={onSaveRoutine}
+            onDeleteRoutine={onDeleteRoutine}
+            stagedExercises={localStaged}
+            setStagedExercises={setLocalStaged}
+            onBack={onClose}
+            onComplete={() => onComplete(localStaged)}
+            completeLabel="운동 추가"
+          />
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // 운동 선택 화면 본체 (분류/전체/최근 30일/즐겨찾기/루틴/커스텀 탭 공통 컴포넌트)
+    // ============================================================================
+    function ExercisePickerBody({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onDeleteRoutine, stagedExercises, setStagedExercises, onBack, onComplete, completeLabel }) {
       const [activeTab, setActiveTab] = useState('분류');
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedPart, setSelectedPart] = useState(null);
 
       const filteredExercises = useMemo(() => {
-        return EXERCISE_DATABASE.filter(ex => {
+        return exerciseDb.filter(ex => {
           if (activeTab === '즐겨찾기' && !ex.isFavorite) return false;
           if (selectedPart && ex.partId !== selectedPart.id) return false;
           return isSearchMatch(ex.name, searchQuery) || isSearchMatch(ex.category, searchQuery);
         });
-      }, [activeTab, selectedPart, searchQuery]);
+      }, [exerciseDb, activeTab, selectedPart, searchQuery]);
 
       const handleToggleStage = (exercise) => {
         const exists = stagedExercises.some(item => item.id === exercise.id);
@@ -803,6 +1240,18 @@
         } else {
           setStagedExercises([...stagedExercises, exercise]);
         }
+      };
+
+      const handleSaveCurrentAsRoutine = () => {
+        if (stagedExercises.length === 0) return;
+        const name = prompt('루틴 이름을 입력하세요 (예: 등, 이두)');
+        if (name && name.trim()) onSaveRoutine(name.trim(), stagedExercises);
+      };
+
+      const handleLoadRoutine = (routine) => {
+        const toAdd = routine.exercises.filter(rEx => !stagedExercises.some(s => s.id === rEx.id));
+        const fullFromDb = toAdd.map(rEx => exerciseDb.find(e => e.id === rEx.id) || rEx);
+        setStagedExercises([...stagedExercises, ...fullFromDb]);
       };
 
       return (
@@ -829,7 +1278,7 @@
           </div>
 
           <div className="flex border-b border-gray-800 bg-[#1A1A1A] text-xs font-semibold overflow-x-auto flex-shrink-0">
-            {['분류', '전체', '최근 30일', '즐겨찾기', '커스텀'].map((tab) => (
+            {['분류', '전체', '최근 30일', '즐겨찾기', '루틴', '커스텀'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -846,11 +1295,44 @@
           </div>
 
           <div className="flex-1 overflow-y-auto p-3">
-            {activeTab === '분류' && !selectedPart && !searchQuery && (
+            {activeTab === '루틴' && (
+              <div className="space-y-2">
+                {routines.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500 text-xs">
+                    저장된 루틴이 없습니다.<br/>운동을 선택한 뒤 아래 '루틴으로 저장' 버튼을 눌러보세요.
+                  </div>
+                ) : (
+                  routines.map(r => (
+                    <div key={r.id} className="bg-[#1E1E1E] border border-gray-800/80 rounded-xl p-3 flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-sm text-gray-100">{r.name}</div>
+                        <div className="text-xs text-gray-400">{r.partSummary} • {r.exercises.length}개 운동</div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handleLoadRoutine(r)}
+                          className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1.5 rounded-lg"
+                        >
+                          불러오기
+                        </button>
+                        <button
+                          onClick={() => { if (confirm(`'${r.name}' 루틴을 삭제할까요?`)) onDeleteRoutine(r.id); }}
+                          className="p-1.5 text-gray-500 hover:text-red-400"
+                        >
+                          <Icon name="trash-2" className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeTab !== '루틴' && activeTab === '분류' && !selectedPart && !searchQuery && (
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-xs text-gray-400 font-semibold px-1">
                   <span>부위 선택</span>
-                  <span className="text-blue-400">전체 {EXERCISE_DATABASE.length}개 운동</span>
+                  <span className="text-blue-400">전체 {exerciseDb.length}개 운동</span>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2.5">
@@ -865,7 +1347,7 @@
                         <span className="font-semibold text-sm">{part.name}</span>
                       </div>
                       <span className="text-xs font-mono text-blue-400">
-                        {EXERCISE_DATABASE.filter(e => e.partId === part.id).length}
+                        {exerciseDb.filter(e => e.partId === part.id).length}
                       </span>
                     </div>
                   ))}
@@ -873,7 +1355,7 @@
               </div>
             )}
 
-            {(selectedPart || activeTab !== '분류' || searchQuery) && (
+            {activeTab !== '루틴' && (selectedPart || activeTab !== '분류' || searchQuery) && (
               <div className="space-y-2">
                 {selectedPart && (
                   <div className="flex items-center space-x-2 text-xs text-blue-400 mb-3 bg-[#1E1E1E] p-2 rounded-lg">
@@ -912,9 +1394,18 @@
                           </div>
                         </div>
 
-                        <span className={`text-xs px-2.5 py-1 rounded-lg ${isStaged ? 'bg-blue-600 text-white font-bold' : 'bg-gray-800 text-gray-400'}`}>
-                          {isStaged ? '선택됨' : '추가'}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onToggleFavorite(ex.id); }}
+                            className="p-1"
+                            title="즐겨찾기"
+                          >
+                            <Icon name="star" className={`w-4 h-4 ${ex.isFavorite ? 'text-yellow-400' : 'text-gray-600'}`} {...(ex.isFavorite ? { fill: 'currentColor' } : {})} />
+                          </button>
+                          <span className={`text-xs px-2.5 py-1 rounded-lg ${isStaged ? 'bg-blue-600 text-white font-bold' : 'bg-gray-800 text-gray-400'}`}>
+                            {isStaged ? '선택됨' : '추가'}
+                          </span>
+                        </div>
                       </div>
                     );
                   })
@@ -929,6 +1420,12 @@
                 <Icon name="layers" className="w-4 h-4 text-blue-400" />
                 <span>선택된 운동 ({stagedExercises.length})</span>
               </div>
+              {stagedExercises.length > 0 && (
+                <button onClick={handleSaveCurrentAsRoutine} className="text-[11px] text-blue-400 font-semibold hover:underline flex items-center space-x-1">
+                  <Icon name="bookmark-plus" className="w-3.5 h-3.5" />
+                  <span>루틴으로 저장</span>
+                </button>
+              )}
             </div>
 
             <div className="flex space-x-2 overflow-x-auto pb-1">
@@ -961,7 +1458,7 @@
               disabled={stagedExercises.length === 0}
               className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white text-sm font-bold rounded-xl transition-colors shadow-lg active:scale-98"
             >
-              선택 완료 ({stagedExercises.length}개 운동)
+              {completeLabel} ({stagedExercises.length}개 운동)
             </button>
           </div>
         </div>
@@ -978,9 +1475,12 @@
       onBack,
       handleToggleSetComplete,
       handleUpdateSetField,
+      handleSetFieldDirect,
       handleDeleteSet,
       handleAddSet,
       onOpenReplace,
+      onOpenAddExercise,
+      onOpenExerciseInfo,
       timerActive,
       timerTotal,
       timerRemaining,
@@ -992,6 +1492,8 @@
     }) {
       const currentEx = activeSession.exercises[currentExIndex];
       const touchStartXRef = useRef(null);
+      const [editingField, setEditingField] = useState(null); // { setIdx, field }
+      const [editingValue, setEditingValue] = useState('');
 
       const handleTouchStart = (e) => {
         touchStartXRef.current = e.touches[0].clientX;
@@ -1037,7 +1539,12 @@
               <Icon name="chevron-left" className="w-6 h-6" />
             </button>
             <span className="text-sm font-bold text-gray-200">{activeSession.date} 운동 기록</span>
-            <button onClick={onBack} className="p-1 text-blue-400 font-bold text-sm">완료</button>
+            <div className="flex items-center space-x-3">
+              <button onClick={onOpenAddExercise} className="text-xs font-bold text-gray-200 bg-[#282828] px-2 py-1 rounded-md hover:bg-[#333333]">
+                운동추가
+              </button>
+              <button onClick={onBack} className="p-1 text-blue-400 font-bold text-sm">완료</button>
+            </div>
           </div>
 
           {/* 인디케이터 */}
@@ -1071,8 +1578,13 @@
 
             <div>
               <div className="flex justify-between items-start">
-                <h2 className="text-xl font-extrabold text-white">{currentEx.name}</h2>
-                <button onClick={onOpenReplace} className="text-xs text-blue-400 font-bold hover:underline">교체</button>
+                <div className="flex items-center space-x-1.5">
+                  <h2 className="text-xl font-extrabold text-white">{currentEx.name}</h2>
+                  <button onClick={() => onOpenExerciseInfo(currentEx)} className="text-gray-400 hover:text-blue-400">
+                    <Icon name="info" className="w-4 h-4" />
+                  </button>
+                </div>
+                <button onClick={onOpenReplace} className="text-xs text-blue-400 font-bold hover:underline flex-shrink-0">교체</button>
               </div>
 
               <div className="grid grid-cols-3 gap-2 mt-3 bg-[#1E1E1E] p-3 rounded-xl border border-gray-800">
@@ -1114,14 +1626,48 @@
                     </div>
                   </div>
 
-                  {/* 수치 표시 영역 */}
+                  {/* 수치 표시 영역 (터치하여 직접 입력 가능) */}
                   <div className="flex items-center space-x-2">
                     <div className="text-center min-w-[42px]">
-                      <span className="text-sm font-bold text-white font-mono">{set.weight}</span>
+                      {editingField && editingField.setIdx === setIdx && editingField.field === 'weight' ? (
+                        <input
+                          type="number"
+                          autoFocus
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onBlur={() => { handleSetFieldDirect(currentExIndex, setIdx, 'weight', editingValue); setEditingField(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                          className="w-12 bg-[#121212] border border-blue-500 rounded text-center text-sm font-bold text-white font-mono py-0.5"
+                        />
+                      ) : (
+                        <span
+                          onClick={() => { setEditingField({ setIdx, field: 'weight' }); setEditingValue(String(set.weight)); }}
+                          className="text-sm font-bold text-white font-mono cursor-pointer border-b border-dashed border-gray-600"
+                        >
+                          {set.weight}
+                        </span>
+                      )}
                       <span className="text-[10px] text-gray-400 ml-0.5">kg</span>
                     </div>
                     <div className="text-center min-w-[32px]">
-                      <span className="text-sm font-bold text-white font-mono">{set.reps}</span>
+                      {editingField && editingField.setIdx === setIdx && editingField.field === 'reps' ? (
+                        <input
+                          type="number"
+                          autoFocus
+                          value={editingValue}
+                          onChange={(e) => setEditingValue(e.target.value)}
+                          onBlur={() => { handleSetFieldDirect(currentExIndex, setIdx, 'reps', editingValue); setEditingField(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                          className="w-10 bg-[#121212] border border-blue-500 rounded text-center text-sm font-bold text-white font-mono py-0.5"
+                        />
+                      ) : (
+                        <span
+                          onClick={() => { setEditingField({ setIdx, field: 'reps' }); setEditingValue(String(set.reps)); }}
+                          className="text-sm font-bold text-white font-mono cursor-pointer border-b border-dashed border-gray-600"
+                        >
+                          {set.reps}
+                        </span>
+                      )}
                       <span className="text-[10px] text-gray-400 ml-0.5">회</span>
                     </div>
                   </div>
@@ -1245,11 +1791,11 @@
     // ============================================================================
     // 운동 교체 팝업 모달 컴포넌트
     // ============================================================================
-    function ReplaceExerciseModal({ currentExercise, onClose, onSelectReplace }) {
+    function ReplaceExerciseModal({ exerciseDb, currentExercise, onClose, onSelectReplace }) {
       // 동일 부위의 다른 운동 필터링
       const samePartExercises = useMemo(() => {
-        return EXERCISE_DATABASE.filter(ex => ex.partId === currentExercise.partId && ex.id !== currentExercise.id);
-      }, [currentExercise]);
+        return exerciseDb.filter(ex => ex.partId === currentExercise.partId && ex.id !== currentExercise.id);
+      }, [exerciseDb, currentExercise]);
 
       return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
@@ -1285,6 +1831,162 @@
                     </span>
                   </div>
                 ))
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // 운동별 정보 / 히스토리 / 차트 모달 (유튜브 영상 링크 포함)
+    // ============================================================================
+    function ExerciseInfoModal({ exercise, workoutLogs, onClose }) {
+      const [tab, setTab] = useState('정보');
+
+      // 전체 운동 기록에서 동일 운동(id) 이력 수집 (최신순)
+      const history = useMemo(() => {
+        const rows = [];
+        Object.keys(workoutLogs).sort((a, b) => b.localeCompare(a)).forEach(date => {
+          const log = workoutLogs[date];
+          if (!log.exercises) return;
+          const match = log.exercises.find(e => e.id === exercise.id);
+          if (match) rows.push({ date, exercise: match });
+        });
+        return rows;
+      }, [workoutLogs, exercise.id]);
+
+      const stats = useMemo(() => {
+        let totalSets = 0;
+        let bestVolume = 0;
+        let best1RM = 0;
+        history.forEach(row => {
+          const sets = row.exercise.sets || [];
+          totalSets += sets.filter(s => s.completed).length;
+          const vol = sets.reduce((sum, s) => sum + (s.completed ? s.weight * s.reps : 0), 0);
+          if (vol > bestVolume) bestVolume = vol;
+          if (row.exercise.pr1RM > best1RM) best1RM = row.exercise.pr1RM;
+        });
+        return { sessions: history.length, totalSets, bestVolume, best1RM };
+      }, [history]);
+
+      const youtubeSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(exercise.name + ' 운동 방법')}`;
+
+      return (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-sm max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#252525]">
+              <h3 className="font-bold text-base text-gray-100">{exercise.name}</h3>
+              <button onClick={onClose} className="p-1 text-gray-400 hover:text-white">
+                <Icon name="x" />
+              </button>
+            </div>
+
+            <div className="flex border-b border-gray-800 bg-[#1A1A1A] text-xs font-semibold flex-shrink-0">
+              {['정보', '히스토리', '차트'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`flex-1 py-2.5 transition-colors ${
+                    tab === t ? 'text-blue-400 border-b-2 border-blue-500 bg-[#222834]' : 'text-gray-400 hover:text-gray-200'
+                  }`}
+                >
+                  {t === '정보' ? '운동 정보' : t}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {tab === '정보' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-[#282828] rounded-lg p-2">
+                      <div className="text-[10px] text-gray-400">수행 횟수</div>
+                      <div className="text-sm font-bold text-white">{stats.sessions}일</div>
+                    </div>
+                    <div className="bg-[#282828] rounded-lg p-2">
+                      <div className="text-[10px] text-gray-400">총 세트</div>
+                      <div className="text-sm font-bold text-white">{stats.totalSets}세트</div>
+                    </div>
+                    <div className="bg-[#282828] rounded-lg p-2">
+                      <div className="text-[10px] text-gray-400">최고 1RM</div>
+                      <div className="text-sm font-bold text-blue-400">{stats.best1RM || '-'} kg</div>
+                    </div>
+                  </div>
+
+                  <a
+                    href={youtubeSearchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 bg-red-600/90 hover:bg-red-600 text-white text-sm font-bold rounded-xl flex items-center justify-center space-x-2"
+                  >
+                    <Icon name="youtube" className="w-4 h-4" />
+                    <span>동영상으로 자세 확인하기</span>
+                  </a>
+
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    유튜브에서 '{exercise.name}' 검색 결과로 연결됩니다. 정확한 자세와 호흡법을 영상으로 확인해보세요.
+                  </p>
+                </div>
+              )}
+
+              {tab === '히스토리' && (
+                <div className="space-y-2">
+                  {history.length === 0 ? (
+                    <div className="text-center py-10 text-xs text-gray-500">아직 기록된 이력이 없습니다.</div>
+                  ) : (
+                    history.map((row, idx) => (
+                      <div key={idx} className="bg-[#282828] rounded-lg p-2.5">
+                        <div className="text-xs font-bold text-blue-400 mb-1">{row.date}</div>
+                        <div className="grid grid-cols-4 gap-1 text-[10px] text-gray-300">
+                          {row.exercise.sets.map(s => (
+                            <div key={s.setNum} className="bg-[#1E1E1E] rounded p-1 text-center">
+                              <div className="text-gray-500">{s.setNum}세트</div>
+                              <div className="font-mono">{s.weight}kg</div>
+                              <div className="font-mono">{s.reps}회</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {tab === '차트' && (
+                <div className="space-y-3">
+                  {history.length === 0 ? (
+                    <div className="text-center py-10 text-xs text-gray-500">차트를 표시할 데이터가 없습니다.</div>
+                  ) : (
+                    <>
+                      <div className="text-xs text-gray-400 mb-1">세션별 볼륨 추이 (최근 → 과거)</div>
+                      <div className="flex items-end space-x-1.5 h-32 bg-[#181818] rounded-lg p-2">
+                        {history.slice(0, 10).reverse().map((row, idx) => {
+                          const vol = row.exercise.sets.reduce((sum, s) => sum + (s.completed ? s.weight * s.reps : 0), 0);
+                          const maxVol = Math.max(...history.slice(0, 10).map(r => r.exercise.sets.reduce((s2, s) => s2 + (s.completed ? s.weight * s.reps : 0), 0)), 1);
+                          const heightPct = Math.max(4, (vol / maxVol) * 100);
+                          return (
+                            <div key={idx} className="flex-1 flex flex-col items-center justify-end h-full">
+                              <div className="text-[8px] text-gray-400 mb-0.5">{vol}</div>
+                              <div className="w-full bg-blue-500 rounded-t" style={{ height: `${heightPct}%` }}></div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="space-y-1">
+                        {history.slice(0, 8).map((row, idx) => {
+                          const vol = row.exercise.sets.reduce((sum, s) => sum + (s.completed ? s.weight * s.reps : 0), 0);
+                          return (
+                            <div key={idx} className="flex justify-between text-[11px] text-gray-400 border-b border-gray-800/60 pb-1">
+                              <span>{row.date}</span>
+                              <span className="text-gray-200 font-mono">{vol} kg</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
