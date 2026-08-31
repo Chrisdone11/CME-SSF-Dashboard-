@@ -465,21 +465,36 @@
       }
     };
 
-    // 복싱 라운드 종료 벨과 유사한 종소리 (금속성 배음 + 잔향)
+    // 복싱 라운드 종료 벨과 유사한 종소리 (더 길고 크게: 컴프레서로 볼륨 부스트 + 3연타)
     const playBoxingBellSound = () => {
       try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return;
         const ctx = new AudioContext();
 
+        // 컴프레서로 음량을 키워도 소리가 찢어지지 않게 처리
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.setValueAtTime(-24, ctx.currentTime);
+        compressor.knee.setValueAtTime(30, ctx.currentTime);
+        compressor.ratio.setValueAtTime(12, ctx.currentTime);
+        compressor.attack.setValueAtTime(0.003, ctx.currentTime);
+        compressor.release.setValueAtTime(0.25, ctx.currentTime);
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(1.6, ctx.currentTime); // 전체 음량 부스트
+
+        masterGain.connect(compressor);
+        compressor.connect(ctx.destination);
+
         const ringBell = (startDelay) => {
           const startTime = ctx.currentTime + startDelay;
-          // 벨 특유의 금속성 배음을 위해 여러 오실레이터를 겹침
+          // 벨 특유의 금속성 배음을 위해 여러 오실레이터를 겹침 (더 크고 길게)
           const partials = [
-            { freq: 880, gain: 0.35, decay: 1.1 },
-            { freq: 1320, gain: 0.22, decay: 0.9 },
-            { freq: 1760, gain: 0.14, decay: 0.7 },
-            { freq: 2640, gain: 0.08, decay: 0.5 },
+            { freq: 700, gain: 0.55, decay: 1.8 },
+            { freq: 1050, gain: 0.40, decay: 1.5 },
+            { freq: 1400, gain: 0.28, decay: 1.2 },
+            { freq: 2100, gain: 0.18, decay: 0.9 },
+            { freq: 2800, gain: 0.10, decay: 0.6 },
           ];
           partials.forEach(p => {
             const osc = ctx.createOscillator();
@@ -490,23 +505,27 @@
             gain.gain.linearRampToValueAtTime(p.gain, startTime + 0.01);
             gain.gain.exponentialRampToValueAtTime(0.001, startTime + p.decay);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(masterGain);
             osc.start(startTime);
             osc.stop(startTime + p.decay + 0.05);
           });
         };
 
-        // 복싱 라운드 종료처럼 두 번 연속 타종
+        // 복싱 라운드 종료처럼 세 번 연속 타종 (더 확실하게 들리도록)
         ringBell(0);
-        ringBell(0.22);
+        ringBell(0.28);
+        ringBell(0.56);
       } catch (e) {
         console.error('Audio play failed', e);
       }
     };
 
-    // 카운트다운 진동 (초읽기용) - duration(ms) 지정 가능
-    const vibrateTick = (duration = 200) => {
-      if (navigator.vibrate) navigator.vibrate(duration);
+    // 카운트다운 진동 (초읽기용) - 패턴 배열 지정 가능, 이전 진동을 취소하고 새로 시작해 확실히 느껴지게 함
+    const vibrateTick = (pattern) => {
+      if (navigator.vibrate) {
+        navigator.vibrate(0);
+        navigator.vibrate(pattern);
+      }
     };
 
     // ============================================================================
@@ -568,6 +587,21 @@
       useEffect(() => { saveStorage('routines', routines); }, [routines]);
       useEffect(() => { saveStorage('exerciseDb', exerciseDb); }, [exerciseDb]);
 
+      // 운동 진행 중 세트 완료/무게/횟수/추가삭제 등 모든 변경을 즉시 workoutLogs(=로컬 저장소)에 반영
+      // (세트 세부값까지 앱 재시작 후에도 유지되도록)
+      useEffect(() => {
+        if (!activeSession) return;
+        setWorkoutLogs(prev => ({
+          ...prev,
+          [activeSession.date]: {
+            ...(prev[activeSession.date] || {}),
+            totalSets: activeSession.exercises.reduce((sum, e) => sum + e.sets.length, 0),
+            breakdown: computeBreakdown(activeSession.exercises),
+            exercises: activeSession.exercises
+          }
+        }));
+      }, [activeSession]);
+
       const handleSaveRoutine = (name, exercises) => {
         if (!name || exercises.length === 0) return;
         const partNames = [...new Set(exercises.map(ex => {
@@ -603,7 +637,7 @@
       const [exerciseInfoTarget, setExerciseInfoTarget] = useState(null);
 
       // 날짜 롱탭 복사/이동/삭제 모달 상태
-      const [dateActionState, setDateActionState] = useState(null); // { date, mode: 'menu' | 'pick-target', action: 'copy' | 'move' }
+      const [dateActionState, setDateActionState] = useState(null); // { fromDate, toDate } - 드래그로 날짜에 드롭 후 이동/복사 선택 팝업
 
       // 안드로이드 뒤로가기 버튼 → 이전 단계 이동 (앱 종료 방지)
       useEffect(() => {
@@ -653,16 +687,20 @@
 
           setTimerRemaining(remainingSec);
 
-          // 종료 10초 전(길게) + 3,2,1초 전(강하게) 진동 (한 번씩만)
+          // 종료 10초 전 + 3,2,1초 전 진동 (한 번씩만, 이중 펄스 패턴으로 확실히 인지되도록)
           if ([10, 3, 2, 1].includes(remainingSec) && !vibratedTicksRef.current.has(remainingSec)) {
             vibratedTicksRef.current.add(remainingSec);
-            vibrateTick(remainingSec === 10 ? 450 : 300);
+            if (remainingSec === 10) {
+              vibrateTick([350, 150, 350]); // 10초 전: 길게 두 번
+            } else {
+              vibrateTick([300, 120, 300]); // 3,2,1초 전: 강하고 짧게 두 번씩
+            }
           }
 
           if (remainingSec <= 0) {
             clearInterval(timerIntervalRef.current);
             setTimerActive(false);
-            if (navigator.vibrate) navigator.vibrate([250, 100, 250]);
+            vibrateTick([400, 150, 400, 150, 400]); // 종료: 강한 3연속 진동
             if (!isMuted) playBoxingBellSound();
           }
         }, 200);
@@ -859,6 +897,48 @@
         setCurrentExIndex(newIdx >= 0 ? newIdx : 0);
       };
 
+      // 운동 순서 조정 화면에서 운동 자체를 삭제
+      const handleDeleteExerciseFromSession = (exerciseId) => {
+        if (!activeSession) return;
+        if (activeSession.exercises.length <= 1) {
+          alert('최소 1개 이상의 운동이 유지되어야 합니다.');
+          return null;
+        }
+        const newExercises = activeSession.exercises.filter(e => e.id !== exerciseId);
+        const updatedSession = { ...activeSession, exercises: newExercises };
+        setActiveSession(updatedSession);
+        setWorkoutLogs(prev => ({
+          ...prev,
+          [activeSession.date]: {
+            ...(prev[activeSession.date] || {}),
+            totalSets: newExercises.reduce((sum, e) => sum + e.sets.length, 0),
+            breakdown: computeBreakdown(newExercises),
+            exercises: newExercises
+          }
+        }));
+        if (currentExIndex >= newExercises.length) {
+          setCurrentExIndex(Math.max(0, newExercises.length - 1));
+        }
+        return newExercises;
+      };
+
+      // 다른 날짜에 기록했던 동일 운동의 세트 구성을 현재 세트에 덮어쓰기
+      const handleLoadSetsIntoExercise = (exIdx, historySets) => {
+        if (!activeSession) return;
+        const updatedExercises = [...activeSession.exercises];
+        updatedExercises[exIdx] = {
+          ...updatedExercises[exIdx],
+          sets: historySets.map((s, idx) => ({
+            setNum: idx + 1,
+            weight: s.weight,
+            reps: s.reps,
+            restSeconds: s.restSeconds || 60,
+            completed: false
+          }))
+        };
+        setActiveSession({ ...activeSession, exercises: updatedExercises });
+      };
+
       // 날짜 롱탭 → 복사 / 이동 / 삭제
       const handleDeleteDateLog = (date) => {
         setWorkoutLogs(prev => {
@@ -966,17 +1046,20 @@
               activeSession={activeSession}
               currentExIndex={currentExIndex}
               setCurrentExIndex={setCurrentExIndex}
+              workoutLogs={workoutLogs}
               onBack={() => setCurrentView('calendar')}
               handleToggleSetComplete={handleToggleSetComplete}
               handleUpdateSetField={handleUpdateSetField}
               handleSetFieldDirect={handleSetFieldDirect}
               handleDeleteSet={handleDeleteSet}
               handleAddSet={handleAddSet}
+              onLoadSets={handleLoadSetsIntoExercise}
               onOpenReplace={() => { setIsReplaceModalOpen(true); navigatePush(); }}
               onOpenAddExercise={() => { setIsAddExerciseModalOpen(true); navigatePush(); }}
               onOpenExerciseInfo={(ex) => { setExerciseInfoTarget(ex); navigatePush(); }}
               onSaveRoutine={handleSaveRoutine}
               onReorderExercises={handleReorderExercises}
+              onDeleteExerciseFromSession={handleDeleteExerciseFromSession}
               timerActive={timerActive}
               timerTotal={timerTotal}
               timerRemaining={timerRemaining}
@@ -1037,25 +1120,88 @@
       const touchStartXRef = useRef(null);
       const longPressTimerRef = useRef(null);
       const longPressFiredRef = useRef(false);
-      const [targetPickDate, setTargetPickDate] = useState({ year: 2026, month: 8, day: 1 });
 
-      // 날짜 롱탭 시작 (복사/이동/삭제 메뉴)
+      // 날짜 드래그 앤 드롭 (이동/복사/삭제)
+      const draggingDateRef = useRef(null);
+      const dragOverDateRef = useRef(null);
+      const isOverDeleteZoneRef = useRef(false);
+      const [draggingDate, setDraggingDate] = useState(null);
+      const [dragOverDate, setDragOverDate] = useState(null);
+      const [isOverDeleteZone, setIsOverDeleteZone] = useState(false);
+
+      // 롱탭으로 드래그 시작 (기록이 있는 날짜만 드래그 가능)
       const handleDayPressStart = (dateStr, hasLog) => {
         longPressFiredRef.current = false;
         if (!hasLog) return;
         if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = setTimeout(() => {
           longPressFiredRef.current = true;
+          draggingDateRef.current = dateStr;
+          setDraggingDate(dateStr);
           if (navigator.vibrate) navigator.vibrate(40);
-          setDateActionState({ date: dateStr, mode: 'menu', action: null });
-        }, 500);
+        }, 400);
       };
+
+      const handleDayTouchMove = (e) => {
+        if (!draggingDateRef.current) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+
+        const deleteZoneEl = el && el.closest && el.closest('[data-delete-zone]');
+        if (deleteZoneEl) {
+          if (!isOverDeleteZoneRef.current) {
+            isOverDeleteZoneRef.current = true;
+            setIsOverDeleteZone(true);
+            if (navigator.vibrate) navigator.vibrate(25);
+          }
+          if (dragOverDateRef.current) { dragOverDateRef.current = null; setDragOverDate(null); }
+          return;
+        }
+        if (isOverDeleteZoneRef.current) { isOverDeleteZoneRef.current = false; setIsOverDeleteZone(false); }
+
+        const dayEl = el && el.closest && el.closest('[data-cal-date]');
+        const overDate = dayEl ? dayEl.getAttribute('data-cal-date') : null;
+        if (overDate !== dragOverDateRef.current) {
+          dragOverDateRef.current = overDate;
+          setDragOverDate(overDate);
+        }
+      };
+
       const handleDayPressEnd = () => {
         if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+
+        if (draggingDateRef.current) {
+          const fromDate = draggingDateRef.current;
+          if (isOverDeleteZoneRef.current) {
+            if (confirm(`${fromDate} 기록을 삭제할까요?`)) {
+              onDeleteDateLog(fromDate);
+            }
+          } else if (dragOverDateRef.current && dragOverDateRef.current !== fromDate) {
+            setDateActionState({ fromDate, toDate: dragOverDateRef.current });
+          }
+        }
+
+        draggingDateRef.current = null;
+        dragOverDateRef.current = null;
+        isOverDeleteZoneRef.current = false;
+        setDraggingDate(null);
+        setDragOverDate(null);
+        setIsOverDeleteZone(false);
       };
+
       const handleDayClick = (dateStr) => {
         if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
         setSelectedDate(dateStr);
+      };
+
+      // 드래그 중이 아니면 손가락이 움직일 때 롱프레스(=드래그 시작)를 취소해 스크롤과 충돌하지 않게 함
+      const handleCellTouchMove = (e) => {
+        if (draggingDateRef.current) {
+          handleDayTouchMove(e);
+        } else if (longPressTimerRef.current) {
+          clearTimeout(longPressTimerRef.current);
+        }
       };
 
       const formattedMonthStr = `${currentYearMonth.year}.${String(currentYearMonth.month).padStart(2, '0')}`;
@@ -1181,16 +1327,23 @@
                 return (
                   <div
                     key={idx}
+                    data-cal-date={dateStr || undefined}
                     onClick={() => dateStr && handleDayClick(dateStr)}
                     onTouchStart={() => dateStr && handleDayPressStart(dateStr, !!log)}
                     onTouchEnd={handleDayPressEnd}
-                    onTouchMove={handleDayPressEnd}
+                    onTouchMove={handleCellTouchMove}
                     onMouseDown={() => dateStr && handleDayPressStart(dateStr, !!log)}
                     onMouseUp={handleDayPressEnd}
                     onMouseLeave={handleDayPressEnd}
-                    className={`p-1 flex flex-col justify-between cursor-pointer transition-colors relative min-h-[92px] ${
+                    className={`p-1 flex flex-col justify-between cursor-pointer transition-all relative min-h-[92px] ${
                       !item.isCurrentMonth ? 'bg-[#151518] text-gray-500' : 'bg-[#1A1A1A] text-gray-300'
-                    } ${isSelected ? 'ring-2 ring-blue-500 bg-[#222834]' : 'hover:bg-[#222222]'}`}
+                    } ${isSelected ? 'ring-2 ring-blue-500 bg-[#222834]' : 'hover:bg-[#222222]'} ${
+                      draggingDate === dateStr ? 'opacity-40 scale-95' : ''
+                    } ${
+                      dragOverDate === dateStr && draggingDate && draggingDate !== dateStr
+                        ? 'ring-2 ring-emerald-400 bg-[#1B2E24] scale-[1.03] z-10'
+                        : ''
+                    }`}
                   >
                     <div className="flex justify-between items-center">
                       <span className={`text-xs font-semibold ${item.isCurrentMonth ? 'text-gray-200' : 'text-gray-500'}`}>
@@ -1297,94 +1450,65 @@
             </div>
           )}
 
-          {/* 날짜 롱탭 → 복사/이동/삭제 메뉴 */}
-          {dateActionState && dateActionState.mode === 'menu' && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-              <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl">
-                <div className="flex justify-between items-center border-b border-gray-800 pb-2">
-                  <h3 className="font-bold text-sm text-gray-100">{dateActionState.date}</h3>
-                  <button onClick={() => setDateActionState(null)} className="p-1 text-gray-400 hover:text-white">
-                    <Icon name="x" />
-                  </button>
-                </div>
-                <button
-                  onClick={() => {
-                    setTargetPickDate({ year: currentYearMonth.year, month: currentYearMonth.month, day: 1 });
-                    setDateActionState({ ...dateActionState, mode: 'pick-target', action: 'copy' });
-                  }}
-                  className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-sm font-semibold text-gray-100 rounded-xl flex items-center justify-center space-x-2"
-                >
-                  <Icon name="copy" className="w-4 h-4" /> <span>다른 날짜로 복사</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setTargetPickDate({ year: currentYearMonth.year, month: currentYearMonth.month, day: 1 });
-                    setDateActionState({ ...dateActionState, mode: 'pick-target', action: 'move' });
-                  }}
-                  className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-sm font-semibold text-gray-100 rounded-xl flex items-center justify-center space-x-2"
-                >
-                  <Icon name="move" className="w-4 h-4" /> <span>다른 날짜로 이동</span>
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`${dateActionState.date} 기록을 삭제할까요?`)) {
-                      onDeleteDateLog(dateActionState.date);
-                    }
-                  }}
-                  className="w-full py-2.5 bg-red-900/40 hover:bg-red-900/60 text-sm font-semibold text-red-300 rounded-xl flex items-center justify-center space-x-2"
-                >
-                  <Icon name="trash-2" className="w-4 h-4" /> <span>기록 삭제</span>
-                </button>
+          {/* 드래그 중 하단에 나타나는 삭제 드롭존 */}
+          {draggingDate && (
+            <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center pb-6 pointer-events-none">
+              <div
+                data-delete-zone="true"
+                className={`pointer-events-auto flex items-center space-x-2 px-6 py-3.5 rounded-full shadow-2xl border-2 transition-all ${
+                  isOverDeleteZone
+                    ? 'bg-red-600 border-red-300 scale-110'
+                    : 'bg-red-900/80 border-red-700/60'
+                }`}
+              >
+                <Icon name="trash-2" className="w-5 h-5 text-white" />
+                <span className="text-sm font-bold text-white">여기로 끌어서 삭제</span>
               </div>
             </div>
           )}
 
-          {/* 복사/이동 대상 날짜 선택 */}
-          {dateActionState && dateActionState.mode === 'pick-target' && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-              <div className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-xs p-4 space-y-4 shadow-2xl">
+          {/* 드래그 중 상단 안내 문구 */}
+          {draggingDate && (
+            <div className="fixed inset-x-0 top-3 z-50 flex justify-center pointer-events-none">
+              <div className="bg-black/80 border border-gray-700 px-4 py-2 rounded-full text-xs text-gray-200 shadow-xl">
+                {draggingDate} 을(를) 드래그 중 · 원하는 날짜에 놓으세요
+              </div>
+            </div>
+          )}
+
+          {/* 드롭 완료 → 이동/복사 선택 팝업 */}
+          {dateActionState && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50" onClick={() => setDateActionState(null)}>
+              <div
+                className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-xs p-4 space-y-3 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <div className="flex justify-between items-center border-b border-gray-800 pb-2">
                   <h3 className="font-bold text-sm text-gray-100">
-                    {dateActionState.action === 'copy' ? '복사할 날짜 선택' : '이동할 날짜 선택'}
+                    {dateActionState.fromDate} → {dateActionState.toDate}
                   </h3>
                   <button onClick={() => setDateActionState(null)} className="p-1 text-gray-400 hover:text-white">
                     <Icon name="x" />
                   </button>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <select
-                    value={targetPickDate.year}
-                    onChange={(e) => setTargetPickDate({ ...targetPickDate, year: Number(e.target.value) })}
-                    className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none"
-                  >
-                    {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}년</option>)}
-                  </select>
-                  <select
-                    value={targetPickDate.month}
-                    onChange={(e) => setTargetPickDate({ ...targetPickDate, month: Number(e.target.value) })}
-                    className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}월</option>)}
-                  </select>
-                  <select
-                    value={targetPickDate.day}
-                    onChange={(e) => setTargetPickDate({ ...targetPickDate, day: Number(e.target.value) })}
-                    className="w-full bg-[#121212] border border-gray-700 rounded-lg p-2 text-xs text-white focus:outline-none"
-                  >
-                    {Array.from({ length: new Date(targetPickDate.year, targetPickDate.month, 0).getDate() }, (_, i) => i + 1).map(d => (
-                      <option key={d} value={d}>{d}일</option>
-                    ))}
-                  </select>
-                </div>
+                <p className="text-xs text-gray-400">이 날짜의 운동 기록을 어떻게 처리할까요?</p>
                 <button
                   onClick={() => {
-                    const toDate = `${targetPickDate.year}-${String(targetPickDate.month).padStart(2, '0')}-${String(targetPickDate.day).padStart(2, '0')}`;
-                    if (dateActionState.action === 'copy') onCopyDateLog(dateActionState.date, toDate);
-                    else onMoveDateLog(dateActionState.date, toDate);
+                    onMoveDateLog(dateActionState.fromDate, dateActionState.toDate);
+                    setDateActionState(null);
                   }}
-                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-colors"
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-sm font-bold text-white rounded-xl flex items-center justify-center space-x-2"
                 >
-                  확인
+                  <Icon name="move" className="w-4 h-4" /> <span>이 날짜로 이동</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onCopyDateLog(dateActionState.fromDate, dateActionState.toDate);
+                    setDateActionState(null);
+                  }}
+                  className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-sm font-semibold text-gray-100 rounded-xl flex items-center justify-center space-x-2"
+                >
+                  <Icon name="copy" className="w-4 h-4" /> <span>이 날짜로 복사</span>
                 </button>
               </div>
             </div>
@@ -1739,17 +1863,20 @@
       activeSession,
       currentExIndex,
       setCurrentExIndex,
+      workoutLogs,
       onBack,
       handleToggleSetComplete,
       handleUpdateSetField,
       handleSetFieldDirect,
       handleDeleteSet,
       handleAddSet,
+      onLoadSets,
       onOpenReplace,
       onOpenAddExercise,
       onOpenExerciseInfo,
       onSaveRoutine,
       onReorderExercises,
+      onDeleteExerciseFromSession,
       timerActive,
       timerTotal,
       timerRemaining,
@@ -1764,6 +1891,34 @@
       const [editingField, setEditingField] = useState(null); // { setIdx, field }
       const [editingValue, setEditingValue] = useState('');
       const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+      const [isLoadSetsModalOpen, setIsLoadSetsModalOpen] = useState(false);
+
+      // 운동 화면 표시 중에는 화면이 꺼지지 않도록 Wake Lock 유지
+      useEffect(() => {
+        let wakeLock = null;
+
+        const requestWakeLock = async () => {
+          try {
+            if ('wakeLock' in navigator) {
+              wakeLock = await navigator.wakeLock.request('screen');
+            }
+          } catch (e) {
+            console.error('화면 유지(Wake Lock) 요청 실패:', e);
+          }
+        };
+        requestWakeLock();
+
+        // 앱이 백그라운드로 갔다가 다시 돌아오면 Wake Lock이 자동 해제되므로 재요청
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') requestWakeLock();
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        return () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+          if (wakeLock) wakeLock.release().catch(() => {});
+        };
+      }, []);
 
       // 오늘 운동 조합 전체를 하나의 루틴으로 저장 (하루 운동 세트 구성)
       const onSaveCurrentAsRoutine = () => {
@@ -1793,6 +1948,26 @@
       const totalVolume = useMemo(() => {
         if (!currentEx) return 0;
         return currentEx.sets.reduce((sum, s) => sum + (s.completed ? s.weight * s.reps : 0), 0);
+      }, [currentEx]);
+
+      // 최대 무게 세트 (완료된 세트 중 가장 무거운 무게)
+      const bestSet = useMemo(() => {
+        if (!currentEx) return { weight: 0, reps: 0 };
+        const completedSets = currentEx.sets.filter(s => s.completed && s.weight > 0);
+        if (completedSets.length === 0) return { weight: 0, reps: 0 };
+        return completedSets.reduce((best, s) => (s.weight > best.weight ? s : best), completedSets[0]);
+      }, [currentEx]);
+
+      // 추정 1RM (Epley 공식: weight * (1 + reps/30), 완료된 세트 중 최대값)
+      const estimated1RM = useMemo(() => {
+        if (!currentEx) return 0;
+        const completedSets = currentEx.sets.filter(s => s.completed && s.weight > 0 && s.reps > 0);
+        if (completedSets.length === 0) return 0;
+        const best = completedSets.reduce((acc, s) => {
+          const oneRM = s.weight * (1 + s.reps / 30);
+          return oneRM > acc ? oneRM : acc;
+        }, 0);
+        return Math.round(best * 10) / 10;
       }, [currentEx]);
 
       const timerProgress = useMemo(() => {
@@ -1873,11 +2048,13 @@
               <div className="grid grid-cols-3 gap-2 mt-3 bg-[#1E1E1E] p-3 rounded-xl border border-gray-800">
                 <div>
                   <div className="text-[10px] text-gray-400">최대 무게</div>
-                  <div className="text-sm font-bold text-gray-100">{currentEx.prWeight} x {currentEx.prReps}</div>
+                  <div className="text-sm font-bold text-gray-100">
+                    {bestSet.weight > 0 ? `${bestSet.weight} x ${bestSet.reps}` : '-'}
+                  </div>
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400">추정 1RM</div>
-                  <div className="text-sm font-bold text-blue-400">{currentEx.pr1RM} kg</div>
+                  <div className="text-sm font-bold text-blue-400">{estimated1RM > 0 ? `${estimated1RM} kg` : '-'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400">총 볼륨</div>
@@ -2002,13 +2179,22 @@
               ))}
             </div>
 
-            <button
-              onClick={() => handleAddSet(currentExIndex)}
-              className="w-full py-2.5 border border-dashed border-gray-700 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-xl text-xs font-bold flex items-center justify-center space-x-1 transition-colors"
-            >
-              <Icon name="plus" className="w-4 h-4" />
-              <span>세트 추가</span>
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setIsLoadSetsModalOpen(true)}
+                className="flex-1 py-2.5 border border-dashed border-gray-700 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-xl text-xs font-bold flex items-center justify-center space-x-1 transition-colors"
+              >
+                <Icon name="history" className="w-4 h-4" />
+                <span>세트 호출</span>
+              </button>
+              <button
+                onClick={() => handleAddSet(currentExIndex)}
+                className="flex-1 py-2.5 border border-dashed border-gray-700 hover:border-blue-500 text-gray-400 hover:text-blue-400 rounded-xl text-xs font-bold flex items-center justify-center space-x-1 transition-colors"
+              >
+                <Icon name="plus" className="w-4 h-4" />
+                <span>세트 추가</span>
+              </button>
+            </div>
           </div>
 
           {/* 하단 타이머 바 ('정지' 명칭 변경 & 높이 고정) */}
@@ -2056,8 +2242,17 @@
                 {/* '정지' 명칭으로 고정 및 크기 유지 */}
                 <button 
                   onClick={() => {
-                    if (timerActive) stopTimer();
-                    else startTimer(60);
+                    if (timerActive) {
+                      stopTimer();
+                      return;
+                    }
+                    // 시작 버튼 → 다음 미완료 세트를 완료 처리하며 휴식 타이머 시작 (진행 흐름 인식)
+                    const nextIdx = currentEx.sets.findIndex(s => !s.completed);
+                    if (nextIdx !== -1) {
+                      handleToggleSetComplete(currentExIndex, nextIdx);
+                    } else {
+                      startTimer(60);
+                    }
                   }}
                   className="w-16 h-9 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg flex items-center justify-center space-x-1 shadow-md active:scale-95 transition-transform"
                 >
@@ -2075,6 +2270,21 @@
               onClose={() => setIsOrderModalOpen(false)}
               onSelectExercise={(idx) => { setCurrentExIndex(idx); setIsOrderModalOpen(false); }}
               onReorder={(newOrder) => { onReorderExercises(newOrder); }}
+              onDeleteExercise={(exerciseId) => onDeleteExerciseFromSession(exerciseId)}
+            />
+          )}
+
+          {/* 세트 호출 모달 (이전에 이 운동을 했던 다른 날짜의 세트 구성 불러오기) */}
+          {isLoadSetsModalOpen && (
+            <LoadSetsModal
+              exercise={currentEx}
+              workoutLogs={workoutLogs}
+              currentDate={activeSession.date}
+              onClose={() => setIsLoadSetsModalOpen(false)}
+              onLoad={(historySets) => {
+                onLoadSets(currentExIndex, historySets);
+                setIsLoadSetsModalOpen(false);
+              }}
             />
           )}
         </div>
@@ -2084,7 +2294,7 @@
     // ============================================================================
     // 운동 순서 조정 화면 (운동별 목록을 롱탭+드래그 또는 화살표 버튼으로 순서 변경)
     // ============================================================================
-    function ExerciseOrderModal({ exercises, onClose, onSelectExercise, onReorder }) {
+    function ExerciseOrderModal({ exercises, onClose, onSelectExercise, onReorder, onDeleteExercise }) {
       const [order, setOrder] = useState(exercises);
       const [draggingIdx, setDraggingIdx] = useState(null);
       const [dragOverIdx, setDragOverIdx] = useState(null);
@@ -2092,9 +2302,22 @@
       const longPressTimerRef = useRef(null);
       const activeDragIdxRef = useRef(null);
 
+      // 부모의 운동 목록이 바뀌면(삭제 등) 로컬 순서도 동기화
+      useEffect(() => { setOrder(exercises); }, [exercises]);
+
       const commitOrder = (newOrder) => {
         setOrder(newOrder);
         onReorder(newOrder);
+      };
+
+      const handleDeleteClick = (id) => {
+        if (order.length <= 1) {
+          alert('최소 1개 이상의 운동이 유지되어야 합니다.');
+          return;
+        }
+        if (!confirm('이 운동을 목록에서 삭제할까요?')) return;
+        setOrder(order.filter(e => e.id !== id));
+        onDeleteExercise(id);
       };
 
       const moveItem = (fromIdx, toIdx) => {
@@ -2195,6 +2418,13 @@
                   >
                     <Icon name="chevron-down" className="w-4 h-4" />
                   </button>
+                  <button
+                    onClick={() => handleDeleteClick(ex.id)}
+                    className="p-1.5 text-gray-500 hover:text-red-400"
+                    title="운동 삭제"
+                  >
+                    <Icon name="trash-2" className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -2248,6 +2478,77 @@
                 ))
               )}
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // 세트 호출 모달 (동일 운동의 과거 날짜 세트 구성을 불러와 현재 세트에 덮어쓰기)
+    // ============================================================================
+    function LoadSetsModal({ exercise, workoutLogs, currentDate, onClose, onLoad }) {
+      const history = useMemo(() => {
+        const rows = [];
+        Object.keys(workoutLogs).sort((a, b) => b.localeCompare(a)).forEach(date => {
+          const log = workoutLogs[date];
+          if (!log.exercises) return;
+          const match = log.exercises.find(e => e.id === exercise.id);
+          if (match && match.sets && match.sets.length > 0) {
+            rows.push({ date, sets: match.sets });
+          }
+        });
+        return rows;
+      }, [workoutLogs, exercise.id]);
+
+      return (
+        <div className="fixed inset-0 bg-[#121212] z-50 flex flex-col">
+          <div className="p-3 bg-[#1E1E1E] border-b border-gray-800 flex items-center space-x-3 flex-shrink-0">
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-white">
+              <Icon name="chevron-left" className="w-6 h-6" />
+            </button>
+            <span className="text-sm font-bold text-gray-200">세트 불러오기</span>
+          </div>
+
+          <div className="px-4 py-3 text-xs text-gray-400 border-b border-gray-800/60 flex-shrink-0">
+            {exercise.name}
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            {history.length === 0 ? (
+              <div className="text-center py-16 text-xs text-gray-500">
+                이전에 기록된 세트가 없습니다.
+              </div>
+            ) : (
+              history.map((row, idx) => {
+                const isCurrent = row.date === currentDate;
+                return (
+                  <div key={idx} className="bg-[#1E1E1E] border border-gray-800/80 rounded-xl p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-bold text-gray-100">{row.date}</span>
+                      {isCurrent ? (
+                        <span className="text-[10px] font-bold text-rose-400">현재 세트</span>
+                      ) : (
+                        <button
+                          onClick={() => onLoad(row.sets)}
+                          className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-1 rounded-lg"
+                        >
+                          불러오기
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {row.sets.map(s => (
+                        <div key={s.setNum} className="bg-[#282828] rounded-lg p-1.5 text-center">
+                          <div className="text-[9px] text-gray-500">{s.setNum}세트</div>
+                          <div className="text-xs font-mono text-gray-100 font-bold">{s.weight}kg</div>
+                          <div className="text-xs font-mono text-gray-300">{s.reps}회</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       );
