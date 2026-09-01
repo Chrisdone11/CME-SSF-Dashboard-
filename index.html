@@ -620,6 +620,21 @@
         setRoutines(prev => [newRoutine, ...prev]);
       };
 
+      // 기존에 저장된 루틴을 현재 운동 조합으로 덮어쓰기
+      const handleOverwriteRoutine = (routineId, exercises) => {
+        if (!routineId || exercises.length === 0) return;
+        const partNames = [...new Set(exercises.map(ex => {
+          const bp = BODY_PARTS.find(p => p.id === ex.partId);
+          return bp ? bp.name : '';
+        }).filter(Boolean))];
+        setRoutines(prev => prev.map(r => r.id === routineId ? {
+          ...r,
+          partSummary: partNames.join(', '),
+          exercises: exercises.map(ex => ({ id: ex.id, partId: ex.partId, name: ex.name, category: ex.category, equipment: ex.equipment })),
+          updatedAt: new Date().toISOString().slice(0, 10)
+        } : r));
+      };
+
       const handleDeleteRoutine = (routineId) => {
         setRoutines(prev => prev.filter(r => r.id !== routineId));
       };
@@ -725,12 +740,20 @@
         const updatedExercises = [...activeSession.exercises];
         const targetSet = updatedExercises[exIdx].sets[setIdx];
         const willBeCompleted = !targetSet.completed;
+        const isLastSetOfExercise = setIdx === updatedExercises[exIdx].sets.length - 1;
 
         targetSet.completed = willBeCompleted;
         setActiveSession({ ...activeSession, exercises: updatedExercises });
 
         if (willBeCompleted) {
           startTimer(targetSet.restSeconds || 60);
+
+          // 해당 운동의 마지막 세트를 완료하면 자동으로 다음 운동으로 스와이프 이동
+          if (isLastSetOfExercise && exIdx === currentExIndex && exIdx < updatedExercises.length - 1) {
+            setTimeout(() => {
+              setCurrentExIndex(exIdx + 1);
+            }, 450);
+          }
         }
       };
 
@@ -1033,6 +1056,7 @@
               onToggleFavorite={handleToggleFavorite}
               routines={routines}
               onSaveRoutine={handleSaveRoutine}
+              onOverwriteRoutine={handleOverwriteRoutine}
               onDeleteRoutine={handleDeleteRoutine}
               stagedExercises={stagedExercises}
               setStagedExercises={setStagedExercises}
@@ -1057,7 +1081,9 @@
               onOpenReplace={() => { setIsReplaceModalOpen(true); navigatePush(); }}
               onOpenAddExercise={() => { setIsAddExerciseModalOpen(true); navigatePush(); }}
               onOpenExerciseInfo={(ex) => { setExerciseInfoTarget(ex); navigatePush(); }}
+              routines={routines}
               onSaveRoutine={handleSaveRoutine}
+              onOverwriteRoutine={handleOverwriteRoutine}
               onReorderExercises={handleReorderExercises}
               onDeleteExerciseFromSession={handleDeleteExerciseFromSession}
               timerActive={timerActive}
@@ -1088,6 +1114,7 @@
               onToggleFavorite={handleToggleFavorite}
               routines={routines}
               onSaveRoutine={handleSaveRoutine}
+              onOverwriteRoutine={handleOverwriteRoutine}
               onDeleteRoutine={handleDeleteRoutine}
               existingIds={activeSession.exercises.map(e => e.id)}
               onClose={() => setIsAddExerciseModalOpen(false)}
@@ -1190,8 +1217,20 @@
         setIsOverDeleteZone(false);
       };
 
+      const lastTapRef = useRef({ date: null, time: 0 });
+
       const handleDayClick = (dateStr) => {
         if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
+
+        const now = Date.now();
+        if (lastTapRef.current.date === dateStr && now - lastTapRef.current.time < 350) {
+          // 더블탭 감지 → 바로 운동 화면으로 진입 (기록 있으면 기록보기, 없으면 운동추가)
+          lastTapRef.current = { date: null, time: 0 };
+          setSelectedDate(dateStr);
+          onOpenWorkoutDetail(dateStr);
+          return;
+        }
+        lastTapRef.current = { date: dateStr, time: now };
         setSelectedDate(dateStr);
       };
 
@@ -1329,6 +1368,7 @@
                     key={idx}
                     data-cal-date={dateStr || undefined}
                     onClick={() => dateStr && handleDayClick(dateStr)}
+                    onDoubleClick={() => dateStr && onOpenWorkoutDetail(dateStr)}
                     onTouchStart={() => dateStr && handleDayPressStart(dateStr, !!log)}
                     onTouchEnd={handleDayPressEnd}
                     onTouchMove={handleCellTouchMove}
@@ -1385,8 +1425,13 @@
             <div className="flex space-x-2">
               <button 
                 onClick={() => {
-                  setSelectedDate('2026-08-28');
-                  setCurrentYearMonth({ year: 2026, month: 8 });
+                  const now = new Date();
+                  const y = now.getFullYear();
+                  const m = now.getMonth() + 1;
+                  const d = now.getDate();
+                  const todayStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                  setSelectedDate(todayStr);
+                  setCurrentYearMonth({ year: y, month: m });
                 }} 
                 className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-200 rounded-lg active:scale-95 transition-transform"
               >
@@ -1568,13 +1613,14 @@
     // ============================================================================
     // 화면 2: Multi-Depth 운동 선택 시스템
     // ============================================================================
-    function MultiDepthSelectView({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onDeleteRoutine, stagedExercises, setStagedExercises, onBack, onComplete }) {
+    function MultiDepthSelectView({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onOverwriteRoutine, onDeleteRoutine, stagedExercises, setStagedExercises, onBack, onComplete }) {
       return (
         <ExercisePickerBody
           exerciseDb={exerciseDb}
           onToggleFavorite={onToggleFavorite}
           routines={routines}
           onSaveRoutine={onSaveRoutine}
+          onOverwriteRoutine={onOverwriteRoutine}
           onDeleteRoutine={onDeleteRoutine}
           stagedExercises={stagedExercises}
           setStagedExercises={setStagedExercises}
@@ -1588,7 +1634,7 @@
     // ============================================================================
     // 운동 중 '운동추가' 모달 (동일 운동 선택 UI를 오버레이로 재사용)
     // ============================================================================
-    function AddExerciseModal({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onDeleteRoutine, existingIds, onClose, onComplete }) {
+    function AddExerciseModal({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onOverwriteRoutine, onDeleteRoutine, existingIds, onClose, onComplete }) {
       const [localStaged, setLocalStaged] = useState([]);
       return (
         <div className="fixed inset-0 bg-[#121212] z-50 flex flex-col">
@@ -1597,6 +1643,7 @@
             onToggleFavorite={onToggleFavorite}
             routines={routines}
             onSaveRoutine={onSaveRoutine}
+            onOverwriteRoutine={onOverwriteRoutine}
             onDeleteRoutine={onDeleteRoutine}
             stagedExercises={localStaged}
             setStagedExercises={setLocalStaged}
@@ -1611,7 +1658,7 @@
     // ============================================================================
     // 운동 선택 화면 본체 (분류/전체/최근 30일/즐겨찾기/루틴/커스텀 탭 공통 컴포넌트)
     // ============================================================================
-    function ExercisePickerBody({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onDeleteRoutine, stagedExercises, setStagedExercises, onBack, onComplete, completeLabel }) {
+    function ExercisePickerBody({ exerciseDb, onToggleFavorite, routines, onSaveRoutine, onOverwriteRoutine, onDeleteRoutine, stagedExercises, setStagedExercises, onBack, onComplete, completeLabel }) {
       const [activeTab, setActiveTab] = useState('분류');
       const [searchQuery, setSearchQuery] = useState('');
       const [selectedPart, setSelectedPart] = useState(null);
@@ -1624,6 +1671,8 @@
         });
       }, [exerciseDb, activeTab, selectedPart, searchQuery]);
 
+      const [isSaveRoutineModalOpen, setIsSaveRoutineModalOpen] = useState(false);
+
       const handleToggleStage = (exercise) => {
         const exists = stagedExercises.some(item => item.id === exercise.id);
         if (exists) {
@@ -1631,12 +1680,6 @@
         } else {
           setStagedExercises([...stagedExercises, exercise]);
         }
-      };
-
-      const handleSaveCurrentAsRoutine = () => {
-        if (stagedExercises.length === 0) return;
-        const name = prompt('루틴 이름을 입력하세요 (예: 등, 이두)');
-        if (name && name.trim()) onSaveRoutine(name.trim(), stagedExercises);
       };
 
       const handleLoadRoutine = (routine) => {
@@ -1812,7 +1855,7 @@
                 <span>선택된 운동 ({stagedExercises.length})</span>
               </div>
               {stagedExercises.length > 0 && (
-                <button onClick={handleSaveCurrentAsRoutine} className="text-[11px] text-blue-400 font-semibold hover:underline flex items-center space-x-1">
+                <button onClick={() => setIsSaveRoutineModalOpen(true)} className="text-[11px] text-blue-400 font-semibold hover:underline flex items-center space-x-1">
                   <Icon name="bookmark-plus" className="w-3.5 h-3.5" />
                   <span>루틴으로 저장</span>
                 </button>
@@ -1852,6 +1895,16 @@
               {completeLabel} ({stagedExercises.length}개 운동)
             </button>
           </div>
+
+          {isSaveRoutineModalOpen && (
+            <SaveRoutineModal
+              routines={routines}
+              exercises={stagedExercises}
+              onClose={() => setIsSaveRoutineModalOpen(false)}
+              onSaveNew={(name, exercises) => { onSaveRoutine(name, exercises); setIsSaveRoutineModalOpen(false); }}
+              onOverwrite={(routineId, exercises) => { onOverwriteRoutine(routineId, exercises); setIsSaveRoutineModalOpen(false); }}
+            />
+          )}
         </div>
       );
     }
@@ -1874,7 +1927,9 @@
       onOpenReplace,
       onOpenAddExercise,
       onOpenExerciseInfo,
+      routines,
       onSaveRoutine,
+      onOverwriteRoutine,
       onReorderExercises,
       onDeleteExerciseFromSession,
       timerActive,
@@ -1920,12 +1975,8 @@
         };
       }, []);
 
-      // 오늘 운동 조합 전체를 하나의 루틴으로 저장 (하루 운동 세트 구성)
-      const onSaveCurrentAsRoutine = () => {
-        if (!activeSession.exercises || activeSession.exercises.length === 0) return;
-        const name = prompt('루틴 이름을 입력하세요 (예: 등, 이두)');
-        if (name && name.trim()) onSaveRoutine(name.trim(), activeSession.exercises);
-      };
+      // 오늘 운동 조합 전체를 하나의 루틴으로 저장 (신규 저장 또는 기존 루틴 덮어쓰기)
+      const [isSaveRoutineModalOpen, setIsSaveRoutineModalOpen] = useState(false);
 
       const handleTouchStart = (e) => {
         touchStartXRef.current = e.touches[0].clientX;
@@ -1970,6 +2021,65 @@
         return Math.round(best * 10) / 10;
       }, [currentEx]);
 
+      // 이전 기록(가장 최근 다른 날짜) / 전체 최고 기록 - 최대무게·1RM·총볼륨 각각 계산
+      const exerciseHistoryStats = useMemo(() => {
+        const empty = {
+          prev: { weight: 0, reps: 0, oneRM: 0, volume: 0 },
+          best: { weight: 0, reps: 0, oneRM: 0, volume: 0 }
+        };
+        if (!currentEx || !workoutLogs) return empty;
+
+        const rows = [];
+        Object.keys(workoutLogs).sort((a, b) => b.localeCompare(a)).forEach(date => {
+          const log = workoutLogs[date];
+          if (!log.exercises) return;
+          const match = log.exercises.find(e => e.id === currentEx.id);
+          if (!match) return;
+          const completedSets = (match.sets || []).filter(s => s.completed && s.weight > 0);
+          if (completedSets.length === 0) return;
+          const bestOfDay = completedSets.reduce((b, s) => (s.weight > b.weight ? s : b), completedSets[0]);
+          const oneRMOfDay = completedSets.reduce((acc, s) => Math.max(acc, s.weight * (1 + s.reps / 30)), 0);
+          const volumeOfDay = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+          rows.push({
+            date,
+            weight: bestOfDay.weight,
+            reps: bestOfDay.reps,
+            oneRM: Math.round(oneRMOfDay * 10) / 10,
+            volume: volumeOfDay
+          });
+        });
+
+        if (rows.length === 0) return empty;
+
+        // 이전: 오늘(현재 세션 날짜)보다 이전인 가장 최근 기록
+        const prevRow = rows.find(r => r.date < activeSession.date) || empty.prev;
+
+        // 최고: 전체 기록 중 항목별 최댓값 (날짜 달라도 무방)
+        const best = rows.reduce((acc, r) => ({
+          weight: r.weight > acc.weight ? r.weight : acc.weight,
+          reps: r.weight > acc.weight ? r.reps : acc.reps,
+          oneRM: Math.max(acc.oneRM, r.oneRM),
+          volume: Math.max(acc.volume, r.volume)
+        }), { weight: 0, reps: 0, oneRM: 0, volume: 0 });
+
+        return { prev: prevRow, best };
+      }, [currentEx, workoutLogs, activeSession.date]);
+
+      // 이전 대비 증감 화살표 (상승: 빨강 ↗, 하락: 파랑 ↘)
+      const renderTrend = (current, prev) => {
+        if (!prev || prev <= 0 || !current || current <= 0) return null;
+        if (current > prev) return <span className="text-rose-400 ml-0.5">↗</span>;
+        if (current < prev) return <span className="text-blue-400 ml-0.5">↘</span>;
+        return null;
+      };
+
+      // 현재 값이 전체 최고 기록과 같거나 넘어서면 표시되는 기록 점
+      const renderBestDot = (current, best) => {
+        if (!best || best <= 0 || !current || current <= 0) return null;
+        if (current >= best) return <span className="text-rose-400 ml-0.5">●</span>;
+        return null;
+      };
+
       const timerProgress = useMemo(() => {
         if (!timerActive || timerTotal <= 0) return 0;
         return ((timerTotal - timerRemaining) / timerTotal) * 100;
@@ -1992,7 +2102,7 @@
             </button>
             <span className="text-sm font-bold text-gray-200">{activeSession.date} 운동 기록</span>
             <div className="flex items-center space-x-3">
-              <button onClick={onSaveCurrentAsRoutine} className="text-xs font-bold text-gray-200 bg-[#282828] px-2 py-1 rounded-md hover:bg-[#333333]">
+              <button onClick={() => setIsSaveRoutineModalOpen(true)} className="text-xs font-bold text-gray-200 bg-[#282828] px-2 py-1 rounded-md hover:bg-[#333333]">
                 루틴저장
               </button>
               <button onClick={onBack} className="p-1 text-blue-400 font-bold text-sm">완료</button>
@@ -2051,14 +2161,50 @@
                   <div className="text-sm font-bold text-gray-100">
                     {bestSet.weight > 0 ? `${bestSet.weight} x ${bestSet.reps}` : '-'}
                   </div>
+                  {exerciseHistoryStats.prev.weight > 0 && (
+                    <div className="text-[9px] text-gray-500 mt-0.5">
+                      이전 {exerciseHistoryStats.prev.weight} x {exerciseHistoryStats.prev.reps}
+                      {renderTrend(bestSet.weight, exerciseHistoryStats.prev.weight)}
+                    </div>
+                  )}
+                  {exerciseHistoryStats.best.weight > 0 && (
+                    <div className="text-[9px] text-gray-500">
+                      최고 {exerciseHistoryStats.best.weight} x {exerciseHistoryStats.best.reps}
+                      {renderBestDot(bestSet.weight, exerciseHistoryStats.best.weight)}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400">추정 1RM</div>
                   <div className="text-sm font-bold text-blue-400">{estimated1RM > 0 ? `${estimated1RM} kg` : '-'}</div>
+                  {exerciseHistoryStats.prev.oneRM > 0 && (
+                    <div className="text-[9px] text-gray-500 mt-0.5">
+                      이전 {exerciseHistoryStats.prev.oneRM}kg
+                      {renderTrend(estimated1RM, exerciseHistoryStats.prev.oneRM)}
+                    </div>
+                  )}
+                  {exerciseHistoryStats.best.oneRM > 0 && (
+                    <div className="text-[9px] text-gray-500">
+                      최고 {exerciseHistoryStats.best.oneRM}kg
+                      {renderBestDot(estimated1RM, exerciseHistoryStats.best.oneRM)}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div className="text-[10px] text-gray-400">총 볼륨</div>
                   <div className="text-sm font-bold text-gray-100">{totalVolume} kg</div>
+                  {exerciseHistoryStats.prev.volume > 0 && (
+                    <div className="text-[9px] text-gray-500 mt-0.5">
+                      이전 {exerciseHistoryStats.prev.volume}kg
+                      {renderTrend(totalVolume, exerciseHistoryStats.prev.volume)}
+                    </div>
+                  )}
+                  {exerciseHistoryStats.best.volume > 0 && (
+                    <div className="text-[9px] text-gray-500">
+                      최고 {exerciseHistoryStats.best.volume}kg
+                      {renderBestDot(totalVolume, exerciseHistoryStats.best.volume)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2285,6 +2431,17 @@
                 onLoadSets(currentExIndex, historySets);
                 setIsLoadSetsModalOpen(false);
               }}
+            />
+          )}
+
+          {/* 루틴 저장 모달 (신규 저장 또는 기존 루틴 덮어쓰기) */}
+          {isSaveRoutineModalOpen && (
+            <SaveRoutineModal
+              routines={routines}
+              exercises={activeSession.exercises}
+              onClose={() => setIsSaveRoutineModalOpen(false)}
+              onSaveNew={(name, exercises) => { onSaveRoutine(name, exercises); setIsSaveRoutineModalOpen(false); }}
+              onOverwrite={(routineId, exercises) => { onOverwriteRoutine(routineId, exercises); setIsSaveRoutineModalOpen(false); }}
             />
           )}
         </div>
@@ -2549,6 +2706,91 @@
                 );
               })
             )}
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================================
+    // 루틴 저장 모달 (새 루틴 만들기 또는 기존 루틴에 덮어쓰기)
+    // ============================================================================
+    function SaveRoutineModal({ routines, exercises, onClose, onSaveNew, onOverwrite }) {
+      const [newName, setNewName] = useState('');
+
+      const partSummary = useMemo(() => {
+        const partNames = [...new Set(exercises.map(ex => {
+          const bp = BODY_PARTS.find(p => p.id === ex.partId);
+          return bp ? bp.name : '';
+        }).filter(Boolean))];
+        return partNames.join(', ');
+      }, [exercises]);
+
+      return (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[60]" onClick={onClose}>
+          <div
+            className="bg-[#1E1E1E] border border-gray-700 rounded-2xl w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-[#252525] flex-shrink-0">
+              <div>
+                <h3 className="font-bold text-base text-gray-100">루틴 저장</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{partSummary} • {exercises.length}개 운동</p>
+              </div>
+              <button onClick={onClose} className="p-1 text-gray-400 hover:text-white">
+                <Icon name="x" />
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-gray-800/60 flex-shrink-0 space-y-2">
+              <div className="text-xs text-gray-400 font-semibold">새 루틴으로 저장</div>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="루틴 이름 (예: 등, 이두)"
+                  className="flex-1 bg-[#121212] border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  onClick={() => { if (newName.trim()) onSaveNew(newName.trim(), exercises); }}
+                  disabled={!newName.trim()}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-500 text-white text-xs font-bold rounded-lg flex-shrink-0"
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              <div className="text-xs text-gray-400 font-semibold mb-1">기존 루틴에 덮어쓰기</div>
+              {routines.length === 0 ? (
+                <div className="text-center py-8 text-xs text-gray-500">
+                  저장된 루틴이 없습니다.
+                </div>
+              ) : (
+                routines.map(r => (
+                  <div key={r.id} className="bg-[#282828] border border-gray-700/60 rounded-xl p-3 flex items-center justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center space-x-1.5">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${r.color ? r.color.bg : 'bg-blue-600'}`}></span>
+                        <span className="font-bold text-sm text-gray-100 truncate">{r.name}</span>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-0.5 truncate">{r.partSummary} • {r.exercises.length}개 운동</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (confirm(`'${r.name}' 루틴을 현재 운동 조합으로 덮어쓸까요?`)) {
+                          onOverwrite(r.id, exercises);
+                        }
+                      }}
+                      className="text-xs bg-gray-700 hover:bg-gray-600 text-white font-bold px-2.5 py-1.5 rounded-lg flex-shrink-0 ml-2"
+                    >
+                      덮어쓰기
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       );
