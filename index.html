@@ -154,6 +154,304 @@
       return 'dumbbell';
     };
 
+    // ============================================================================
+    // 운동 동작을 직관적으로 표현하는 커스텀 픽토그램 아이콘 (동작 실루엣)
+    // ============================================================================
+    const PICTOGRAM_DEFS = {
+      benchPress: [
+        ['line', { x1: 2, y1: 15, x2: 15, y2: 15 }],
+        ['line', { x1: 3, y1: 15, x2: 3, y2: 17 }],
+        ['line', { x1: 14, y1: 15, x2: 14, y2: 17 }],
+        ['circle', { cx: 4, cy: 13, r: 1.4 }],
+        ['line', { x1: 5.5, y1: 13.5, x2: 12, y2: 14.5 }],
+        ['line', { x1: 12, y1: 14.5, x2: 11, y2: 17 }],
+        ['line', { x1: 11, y1: 17, x2: 14, y2: 17 }],
+        ['line', { x1: 6, y1: 13, x2: 5, y2: 4 }],
+        ['line', { x1: 8, y1: 13.5, x2: 13, y2: 4 }],
+        ['line', { x1: 2, y1: 4, x2: 16, y2: 4 }],
+        ['circle', { cx: 2, cy: 4, r: 1.5, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 16, cy: 4, r: 1.5, fill: 'currentColor', stroke: 'none' }],
+      ],
+      fly: [
+        ['line', { x1: 2, y1: 15, x2: 15, y2: 15 }],
+        ['line', { x1: 3, y1: 15, x2: 3, y2: 17 }],
+        ['line', { x1: 14, y1: 15, x2: 14, y2: 17 }],
+        ['circle', { cx: 4, cy: 13, r: 1.4 }],
+        ['line', { x1: 5.5, y1: 13.5, x2: 12, y2: 14.5 }],
+        ['line', { x1: 12, y1: 14.5, x2: 11, y2: 17 }],
+        ['line', { x1: 11, y1: 17, x2: 14, y2: 17 }],
+        ['line', { x1: 6, y1: 13, x2: 2, y2: 10 }],
+        ['line', { x1: 8, y1: 13.5, x2: 14, y2: 10 }],
+        ['circle', { cx: 2, cy: 10, r: 1.3, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 14, cy: 10, r: 1.3, fill: 'currentColor', stroke: 'none' }],
+      ],
+      pullover: [
+        ['line', { x1: 3, y1: 15, x2: 15, y2: 15 }],
+        ['line', { x1: 4, y1: 15, x2: 4, y2: 17 }],
+        ['line', { x1: 14, y1: 15, x2: 14, y2: 17 }],
+        ['circle', { cx: 5, cy: 13, r: 1.4 }],
+        ['line', { x1: 6.5, y1: 13.5, x2: 13, y2: 14.5 }],
+        ['line', { x1: 13, y1: 14.5, x2: 12, y2: 17 }],
+        ['line', { x1: 12, y1: 17, x2: 15, y2: 17 }],
+        ['line', { x1: 5, y1: 12.3, x2: 2, y2: 8 }],
+        ['circle', { cx: 2, cy: 8, r: 1.6, fill: 'currentColor', stroke: 'none' }],
+      ],
+      pushup: [
+        ['line', { x1: 1, y1: 15, x2: 16, y2: 15 }],
+        ['line', { x1: 3, y1: 10, x2: 13, y2: 12 }],
+        ['circle', { cx: 3, cy: 9, r: 1.3 }],
+        ['line', { x1: 4, y1: 10.5, x2: 4, y2: 15 }],
+        ['line', { x1: 13, y1: 12, x2: 13, y2: 15 }],
+      ],
+      shoulderPress: [
+        ['circle', { cx: 10, cy: 6, r: 1.5 }],
+        ['line', { x1: 10, y1: 7.5, x2: 10, y2: 13 }],
+        ['line', { x1: 10, y1: 13, x2: 8, y2: 18 }],
+        ['line', { x1: 10, y1: 13, x2: 12, y2: 18 }],
+        ['line', { x1: 9, y1: 8, x2: 6, y2: 3 }],
+        ['line', { x1: 11, y1: 8, x2: 14, y2: 3 }],
+        ['line', { x1: 4, y1: 3, x2: 16, y2: 3 }],
+        ['circle', { cx: 4, cy: 3, r: 1.4, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 16, cy: 3, r: 1.4, fill: 'currentColor', stroke: 'none' }],
+      ],
+      squat: [
+        ['circle', { cx: 10, cy: 4, r: 1.5 }],
+        ['line', { x1: 10, y1: 5.5, x2: 10, y2: 11 }],
+        ['line', { x1: 5, y1: 5.7, x2: 15, y2: 5.7 }],
+        ['circle', { cx: 5, cy: 5.7, r: 1.3, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 15, cy: 5.7, r: 1.3, fill: 'currentColor', stroke: 'none' }],
+        ['line', { x1: 10, y1: 11, x2: 7, y2: 14 }],
+        ['line', { x1: 7, y1: 14, x2: 7, y2: 18 }],
+        ['line', { x1: 10, y1: 11, x2: 13, y2: 14 }],
+        ['line', { x1: 13, y1: 14, x2: 13, y2: 18 }],
+      ],
+      pullUp: [
+        ['line', { x1: 3, y1: 3, x2: 17, y2: 3 }],
+        ['line', { x1: 7, y1: 3, x2: 8, y2: 9 }],
+        ['line', { x1: 13, y1: 3, x2: 12, y2: 9 }],
+        ['circle', { cx: 10, cy: 10, r: 1.5 }],
+        ['line', { x1: 10, y1: 11.5, x2: 10, y2: 16 }],
+        ['line', { x1: 10, y1: 16, x2: 9, y2: 19 }],
+        ['line', { x1: 10, y1: 16, x2: 11, y2: 19 }],
+      ],
+      deadlift: [
+        ['circle', { cx: 6, cy: 6, r: 1.4 }],
+        ['line', { x1: 7, y1: 7, x2: 11, y2: 13 }],
+        ['line', { x1: 11, y1: 13, x2: 11, y2: 18 }],
+        ['line', { x1: 8, y1: 8, x2: 6, y2: 15 }],
+        ['line', { x1: 9, y1: 9, x2: 9, y2: 15 }],
+        ['line', { x1: 4, y1: 15, x2: 14, y2: 15 }],
+        ['circle', { cx: 4, cy: 15, r: 1.6, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 14, cy: 15, r: 1.6, fill: 'currentColor', stroke: 'none' }],
+      ],
+      lunge: [
+        ['circle', { cx: 9, cy: 5, r: 1.4 }],
+        ['line', { x1: 9, y1: 6.5, x2: 10, y2: 11 }],
+        ['line', { x1: 10, y1: 11, x2: 13, y2: 13 }],
+        ['line', { x1: 13, y1: 13, x2: 13, y2: 18 }],
+        ['line', { x1: 10, y1: 11, x2: 6, y2: 14 }],
+        ['line', { x1: 6, y1: 14, x2: 4, y2: 18 }],
+        ['line', { x1: 9, y1: 7, x2: 7, y2: 10 }],
+        ['circle', { cx: 7, cy: 10, r: 1, fill: 'currentColor', stroke: 'none' }],
+        ['line', { x1: 10, y1: 7, x2: 12, y2: 10 }],
+        ['circle', { cx: 12, cy: 10, r: 1, fill: 'currentColor', stroke: 'none' }],
+      ],
+      crunch: [
+        ['line', { x1: 2, y1: 16, x2: 18, y2: 16 }],
+        ['line', { x1: 10, y1: 16, x2: 13, y2: 12 }],
+        ['line', { x1: 13, y1: 12, x2: 13, y2: 16 }],
+        ['line', { x1: 10, y1: 16, x2: 7, y2: 12 }],
+        ['circle', { cx: 6, cy: 10, r: 1.4 }],
+        ['line', { x1: 7, y1: 12, x2: 11, y2: 13 }],
+      ],
+      plank: [
+        ['line', { x1: 4, y1: 10, x2: 16, y2: 8 }],
+        ['circle', { cx: 3, cy: 10.3, r: 1.3 }],
+        ['line', { x1: 5, y1: 10.5, x2: 5, y2: 15 }],
+        ['line', { x1: 16, y1: 8, x2: 16, y2: 15 }],
+        ['line', { x1: 2, y1: 15, x2: 17, y2: 15 }],
+      ],
+      row: [
+        ['circle', { cx: 5, cy: 7, r: 1.4 }],
+        ['line', { x1: 6, y1: 8, x2: 11, y2: 13 }],
+        ['line', { x1: 11, y1: 13, x2: 11, y2: 18 }],
+        ['line', { x1: 9, y1: 9, x2: 11, y2: 10 }],
+        ['line', { x1: 11, y1: 10, x2: 15, y2: 9 }],
+        ['circle', { cx: 15, cy: 9, r: 1 }],
+        ['line', { x1: 15, y1: 9, x2: 15, y2: 16 }],
+        ['line', { x1: 13, y1: 16, x2: 17, y2: 16 }],
+      ],
+      latPulldown: [
+        ['line', { x1: 7, y1: 16.2, x2: 13, y2: 16.2 }],
+        ['circle', { cx: 10, cy: 8, r: 1.4 }],
+        ['line', { x1: 10, y1: 9.5, x2: 10, y2: 15 }],
+        ['line', { x1: 10, y1: 15, x2: 8, y2: 16.2 }],
+        ['line', { x1: 10, y1: 15, x2: 12, y2: 16.2 }],
+        ['line', { x1: 9, y1: 10, x2: 6, y2: 6 }],
+        ['line', { x1: 11, y1: 10, x2: 14, y2: 6 }],
+        ['line', { x1: 4, y1: 6, x2: 16, y2: 6 }],
+      ],
+      lateralRaise: [
+        ['circle', { cx: 10, cy: 5, r: 1.5 }],
+        ['line', { x1: 10, y1: 6.5, x2: 10, y2: 13 }],
+        ['line', { x1: 10, y1: 13, x2: 9, y2: 18 }],
+        ['line', { x1: 10, y1: 13, x2: 11, y2: 18 }],
+        ['line', { x1: 9, y1: 7.5, x2: 3, y2: 7.5 }],
+        ['line', { x1: 11, y1: 7.5, x2: 17, y2: 7.5 }],
+        ['circle', { cx: 3, cy: 7.5, r: 1.3, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 17, cy: 7.5, r: 1.3, fill: 'currentColor', stroke: 'none' }],
+      ],
+      curl: [
+        ['circle', { cx: 10, cy: 5, r: 1.5 }],
+        ['line', { x1: 10, y1: 6.5, x2: 10, y2: 13 }],
+        ['line', { x1: 10, y1: 13, x2: 9, y2: 18 }],
+        ['line', { x1: 10, y1: 13, x2: 11, y2: 18 }],
+        ['line', { x1: 9, y1: 7, x2: 7, y2: 12 }],
+        ['line', { x1: 11, y1: 7, x2: 13, y2: 9 }],
+        ['line', { x1: 13, y1: 9, x2: 11, y2: 6 }],
+        ['circle', { cx: 11, cy: 6, r: 1.2, fill: 'currentColor', stroke: 'none' }],
+      ],
+      tricepsExtension: [
+        ['circle', { cx: 10, cy: 5, r: 1.4 }],
+        ['line', { x1: 10, y1: 6.5, x2: 10, y2: 13 }],
+        ['line', { x1: 10, y1: 13, x2: 9, y2: 18 }],
+        ['line', { x1: 10, y1: 13, x2: 11, y2: 18 }],
+        ['line', { x1: 10, y1: 2, x2: 10, y2: 7 }],
+        ['line', { x1: 10, y1: 7, x2: 11, y2: 9 }],
+        ['line', { x1: 11, y1: 9, x2: 11, y2: 13 }],
+        ['line', { x1: 10, y1: 13, x2: 12, y2: 13 }],
+      ],
+      legMachine: [
+        ['line', { x1: 3, y1: 17, x2: 9, y2: 17 }],
+        ['line', { x1: 3, y1: 9, x2: 3, y2: 17 }],
+        ['circle', { cx: 4, cy: 8, r: 1.4 }],
+        ['line', { x1: 4, y1: 9.5, x2: 4, y2: 15 }],
+        ['line', { x1: 4, y1: 15, x2: 9, y2: 15 }],
+        ['line', { x1: 9, y1: 15, x2: 9, y2: 10 }],
+        ['rect', { x: 8, y: 7.5, width: 2.2, height: 3, rx: 0.4 }],
+      ],
+      calfRaise: [
+        ['circle', { cx: 10, cy: 4, r: 1.4 }],
+        ['line', { x1: 10, y1: 5.5, x2: 10, y2: 13 }],
+        ['line', { x1: 10, y1: 7, x2: 8, y2: 11 }],
+        ['line', { x1: 10, y1: 7, x2: 12, y2: 11 }],
+        ['line', { x1: 10, y1: 13, x2: 10, y2: 17 }],
+        ['line', { x1: 9, y1: 17, x2: 11, y2: 18.5 }],
+      ],
+      shrug: [
+        ['circle', { cx: 10, cy: 5, r: 1.4 }],
+        ['line', { x1: 10, y1: 6.6, x2: 10, y2: 13 }],
+        ['line', { x1: 10, y1: 13, x2: 9, y2: 18 }],
+        ['line', { x1: 10, y1: 13, x2: 11, y2: 18 }],
+        ['line', { x1: 9, y1: 7, x2: 8, y2: 12 }],
+        ['line', { x1: 11, y1: 7, x2: 12, y2: 12 }],
+        ['circle', { cx: 8, cy: 12, r: 1.1, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 12, cy: 12, r: 1.1, fill: 'currentColor', stroke: 'none' }],
+        ['line', { x1: 6, y1: 7, x2: 6, y2: 4.5 }],
+        ['line', { x1: 14, y1: 7, x2: 14, y2: 4.5 }],
+      ],
+      hip: [
+        ['line', { x1: 2, y1: 16, x2: 9, y2: 16 }],
+        ['circle', { cx: 3, cy: 15, r: 1.3 }],
+        ['line', { x1: 4, y1: 15.5, x2: 11, y2: 11 }],
+        ['line', { x1: 11, y1: 11, x2: 14, y2: 13 }],
+        ['line', { x1: 14, y1: 13, x2: 14, y2: 17 }],
+        ['line', { x1: 9, y1: 10.5, x2: 13, y2: 10.5 }],
+        ['circle', { cx: 9, cy: 10.5, r: 1, fill: 'currentColor', stroke: 'none' }],
+        ['circle', { cx: 13, cy: 10.5, r: 1, fill: 'currentColor', stroke: 'none' }],
+      ],
+      backExtension: [
+        ['line', { x1: 4, y1: 14, x2: 12, y2: 14 }],
+        ['line', { x1: 5, y1: 14, x2: 5, y2: 17 }],
+        ['line', { x1: 11, y1: 14, x2: 11, y2: 17 }],
+        ['line', { x1: 6, y1: 14, x2: 2, y2: 15 }],
+        ['line', { x1: 6, y1: 13.5, x2: 11, y2: 8 }],
+        ['circle', { cx: 12, cy: 7, r: 1.3 }],
+        ['line', { x1: 9, y1: 10, x2: 11, y2: 9 }],
+      ],
+      dips: [
+        ['line', { x1: 4, y1: 6, x2: 4, y2: 16 }],
+        ['line', { x1: 14, y1: 6, x2: 14, y2: 16 }],
+        ['line', { x1: 3, y1: 7, x2: 5, y2: 7 }],
+        ['line', { x1: 13, y1: 7, x2: 15, y2: 7 }],
+        ['line', { x1: 4, y1: 7, x2: 8, y2: 11 }],
+        ['line', { x1: 14, y1: 7, x2: 10, y2: 11 }],
+        ['circle', { cx: 9, cy: 10, r: 1.3 }],
+        ['line', { x1: 9, y1: 11.5, x2: 9, y2: 15 }],
+        ['line', { x1: 9, y1: 15, x2: 7, y2: 17 }],
+      ],
+      neck: [
+        ['circle', { cx: 10, cy: 8, r: 2.2 }],
+        ['line', { x1: 10, y1: 10.2, x2: 10, y2: 15 }],
+        ['line', { x1: 7, y1: 11, x2: 13, y2: 11 }],
+        ['line', { x1: 7.5, y1: 7, x2: 12.5, y2: 7 }],
+      ],
+      wristGrip: [
+        ['line', { x1: 3, y1: 12, x2: 10, y2: 12 }],
+        ['circle', { cx: 10, cy: 12, r: 0.8 }],
+        ['circle', { cx: 14, cy: 11, r: 1.8, fill: 'currentColor', stroke: 'none' }],
+        ['line', { x1: 10, y1: 12, x2: 10, y2: 8.5 }],
+      ],
+      jumpRope: [
+        ['circle', { cx: 10, cy: 4, r: 1.4 }],
+        ['line', { x1: 10, y1: 5.5, x2: 10, y2: 12 }],
+        ['line', { x1: 10, y1: 12, x2: 10, y2: 17 }],
+        ['line', { x1: 10, y1: 7, x2: 6, y2: 9 }],
+        ['line', { x1: 10, y1: 7, x2: 14, y2: 9 }],
+        ['polyline', { points: '6,17 10,20.5 14,17' }],
+      ],
+    };
+
+    // 운동 카테고리명 → 픽토그램 아이콘 키 매핑 (구체적인 조건을 먼저 검사)
+    const getPictogramKey = (category) => {
+      const c = category || '';
+      if (c.includes('벤치프레스') || c.includes('체스트프레스') || c.includes('클로즈그립')) return 'benchPress';
+      if (c.includes('플라이')) return 'fly';
+      if (c.includes('풀오버')) return 'pullover';
+      if (c.includes('푸시업')) return 'pushup';
+      if (c.includes('숄더프레스')) return 'shoulderPress';
+      if (c.includes('스쿼트')) return 'squat';
+      if (c.includes('풀업') || c.includes('친업')) return 'pullUp';
+      if (c.includes('데드리프트')) return 'deadlift';
+      if (c.includes('런지')) return 'lunge';
+      if (c.includes('크런치') || c.includes('싯업') || c.includes('레그레이즈')) return 'crunch';
+      if (c.includes('플랭크') || c.includes('코어안정화')) return 'plank';
+      if (c.includes('로우')) return 'row';
+      if (c.includes('리어델트')) return 'row';
+      if (c.includes('랫풀다운')) return 'latPulldown';
+      if (c.includes('레터럴레이즈') || c.includes('프론트레이즈')) return 'lateralRaise';
+      if (c.includes('레그프레스') || c.includes('레그컬') || c.includes('레그익스텐션') || c.includes('어덕터') || c.includes('어브덕터')) return 'legMachine';
+      if (c.includes('손목') || c.includes('그립')) return 'wristGrip';
+      if (c.includes('컬')) return 'curl';
+      if (c.includes('익스텐션') || c.includes('푸시다운') || c.includes('킥백')) return 'tricepsExtension';
+      if (c.includes('카프레이즈')) return 'calfRaise';
+      if (c.includes('슈러그')) return 'shrug';
+      if (c.includes('힙쓰러스트') || c.includes('글루트브릿지')) return 'hip';
+      if (c.includes('백익스텐션') || c.includes('회전운동')) return 'backExtension';
+      if (c.includes('딥스')) return 'dips';
+      if (c.includes('넥')) return 'neck';
+      if (c.includes('줄넘기')) return 'jumpRope';
+      return null;
+    };
+
+    // 픽토그램 렌더러 (동작 실루엣을 SVG 기본 도형으로 표현)
+    const PictogramIcon = ({ pictogramKey, className }) => {
+      const defs = PICTOGRAM_DEFS[pictogramKey];
+      if (!defs) return null;
+      return (
+        <svg viewBox="0 0 20 20" className={className} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          {defs.map(([tag, props], i) => React.createElement(tag, { key: i, ...props }))}
+        </svg>
+      );
+    };
+
+    // 카테고리 매칭 픽토그램이 있으면 그것을, 없으면 기존 기구 기반 아이콘으로 대체
+    const ExerciseIcon = ({ category, equipment, name, className }) => {
+      const pictogramKey = getPictogramKey(category);
+      if (pictogramKey) return <PictogramIcon pictogramKey={pictogramKey} className={className} />;
+      return <Icon name={getExerciseIconName(equipment, name)} className={className} />;
+    };
+
     // 14개 부위
     const BODY_PARTS = [
       { id: 'chest', name: '가슴', icon: '🏋️‍♂️' },
@@ -1820,7 +2118,7 @@
                       >
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 rounded-lg bg-[#282828] flex items-center justify-center flex-shrink-0">
-                            <Icon name={getExerciseIconName(ex.equipment, ex.name)} className="w-5 h-5 text-blue-300" />
+                            <ExerciseIcon category={ex.category} equipment={ex.equipment} name={ex.name} className="w-5 h-5 text-blue-300" />
                           </div>
                           <div>
                             <div className="font-bold text-sm text-gray-100">{ex.name}</div>
