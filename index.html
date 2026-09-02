@@ -1118,6 +1118,17 @@
         setActiveSession({ ...activeSession, exercises: updatedExercises });
       };
 
+      // 무게 운동 ↔ 맨몸(횟수 카운팅) 운동 모드 전환
+      const handleToggleBodyweightMode = (exIdx) => {
+        if (!activeSession) return;
+        const updatedExercises = [...activeSession.exercises];
+        updatedExercises[exIdx] = {
+          ...updatedExercises[exIdx],
+          isBodyweight: !updatedExercises[exIdx].isBodyweight
+        };
+        setActiveSession({ ...activeSession, exercises: updatedExercises });
+      };
+
       const handleAddSet = (exIdx) => {
         if (!activeSession) return;
         const updatedExercises = [...activeSession.exercises];
@@ -1140,6 +1151,8 @@
         id: ex.id,
         partId: ex.partId,
         name: ex.name,
+        // 기구가 '맨몸'인 운동은 기본적으로 맨몸(횟수 카운팅) 모드로 시작 (운동화면에서 언제든 토글 가능)
+        isBodyweight: !!(ex.equipment && ex.equipment.includes('맨몸')),
         prWeight: 90,
         prReps: 8,
         pr1RM: 112.2,
@@ -1396,6 +1409,7 @@
               handleDeleteSet={handleDeleteSet}
               handleAddSet={handleAddSet}
               onReorderSets={handleReorderSets}
+              onToggleBodyweight={handleToggleBodyweightMode}
               weightUnit={weightUnit}
               setWeightUnit={setWeightUnit}
               onLoadSets={handleLoadSetsIntoExercise}
@@ -1538,6 +1552,13 @@
         setIsOverDeleteZone(false);
       };
 
+      // 마우스로 테스트할 때, 삭제존이나 빈 공간 등 어디서 버튼을 놓아도 드래그가 확실히 종료되도록 전역 리스너 등록
+      useEffect(() => {
+        if (!draggingDate) return;
+        window.addEventListener('mouseup', handleDayPressEnd);
+        return () => window.removeEventListener('mouseup', handleDayPressEnd);
+      }, [draggingDate]);
+
       const lastTapRef = useRef({ date: null, time: 0 });
 
       const handleDayClick = (dateStr) => {
@@ -1561,6 +1582,30 @@
           handleDayTouchMove(e);
         } else if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
+        }
+      };
+
+      // 데스크톱 마우스로 테스트할 때도 동일하게 동작하도록 마우스 이동 추적 (터치 로직과 동일)
+      const handleCellMouseMove = (e) => {
+        if (!draggingDateRef.current) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+
+        const deleteZoneEl = el && el.closest && el.closest('[data-delete-zone]');
+        if (deleteZoneEl) {
+          if (!isOverDeleteZoneRef.current) {
+            isOverDeleteZoneRef.current = true;
+            setIsOverDeleteZone(true);
+          }
+          if (dragOverDateRef.current) { dragOverDateRef.current = null; setDragOverDate(null); }
+          return;
+        }
+        if (isOverDeleteZoneRef.current) { isOverDeleteZoneRef.current = false; setIsOverDeleteZone(false); }
+
+        const dayEl = el && el.closest && el.closest('[data-cal-date]');
+        const overDate = dayEl ? dayEl.getAttribute('data-cal-date') : null;
+        if (overDate !== dragOverDateRef.current) {
+          dragOverDateRef.current = overDate;
+          setDragOverDate(overDate);
         }
       };
 
@@ -1694,8 +1739,8 @@
                     onTouchEnd={handleDayPressEnd}
                     onTouchMove={handleCellTouchMove}
                     onMouseDown={() => dateStr && handleDayPressStart(dateStr, !!log)}
+                    onMouseMove={handleCellMouseMove}
                     onMouseUp={handleDayPressEnd}
-                    onMouseLeave={handleDayPressEnd}
                     className={`p-1 flex flex-col justify-between cursor-pointer transition-all relative min-h-[92px] ${
                       !item.isCurrentMonth ? 'bg-[#151518] text-gray-500' : 'bg-[#1A1A1A] text-gray-300'
                     } ${isSelected ? 'ring-2 ring-blue-500 bg-[#222834]' : 'hover:bg-[#222222]'} ${
@@ -2245,6 +2290,7 @@
       handleDeleteSet,
       handleAddSet,
       onReorderSets,
+      onToggleBodyweight,
       weightUnit,
       setWeightUnit,
       onLoadSets,
@@ -2289,8 +2335,14 @@
 
       // 세트 순서 드래그 앤 드롭 (길게 눌러 드래그)
       const setDragStateRef = useRef({ draggingIdx: null, longPressTimer: null });
+      const dragOverSetIdxRef = useRef(null);
       const [draggingSetIdx, setDraggingSetIdx] = useState(null);
       const [dragOverSetIdx, setDragOverSetIdx] = useState(null);
+
+      const updateDragOverSetIdx = (idx) => {
+        dragOverSetIdxRef.current = idx;
+        setDragOverSetIdx(idx);
+      };
 
       const handleSetPressStart = (setIdx) => {
         if (setDragStateRef.current.longPressTimer) clearTimeout(setDragStateRef.current.longPressTimer);
@@ -2312,23 +2364,43 @@
         const rowEl = el && el.closest && el.closest('[data-set-idx]');
         if (rowEl) {
           const overIdx = Number(rowEl.getAttribute('data-set-idx'));
-          if (!Number.isNaN(overIdx)) setDragOverSetIdx(overIdx);
+          if (!Number.isNaN(overIdx)) updateDragOverSetIdx(overIdx);
+        }
+      };
+
+      // 데스크톱 마우스로 테스트할 때도 동일하게 동작하도록 마우스 이동 추적 추가
+      const handleSetMouseMove = (e) => {
+        if (setDragStateRef.current.draggingIdx === null) return;
+        const el = document.elementFromPoint(e.clientX, e.clientY);
+        const rowEl = el && el.closest && el.closest('[data-set-idx]');
+        if (rowEl) {
+          const overIdx = Number(rowEl.getAttribute('data-set-idx'));
+          if (!Number.isNaN(overIdx)) updateDragOverSetIdx(overIdx);
         }
       };
 
       const handleSetPressEnd = () => {
         if (setDragStateRef.current.longPressTimer) clearTimeout(setDragStateRef.current.longPressTimer);
         const fromIdx = setDragStateRef.current.draggingIdx;
-        if (fromIdx !== null && dragOverSetIdx !== null && dragOverSetIdx !== fromIdx) {
+        const toIdx = dragOverSetIdxRef.current;
+        if (fromIdx !== null && toIdx !== null && toIdx !== fromIdx) {
           const newSets = [...currentEx.sets];
           const [moved] = newSets.splice(fromIdx, 1);
-          newSets.splice(dragOverSetIdx, 0, moved);
+          newSets.splice(toIdx, 0, moved);
           onReorderSets(currentExIndex, newSets);
         }
         setDragStateRef.current.draggingIdx = null;
+        dragOverSetIdxRef.current = null;
         setDraggingSetIdx(null);
         setDragOverSetIdx(null);
       };
+
+      // 마우스로 테스트할 때, 목록 바깥 등 어디서 버튼을 놓아도 드래그가 확실히 종료되도록 전역 리스너 등록
+      useEffect(() => {
+        if (draggingSetIdx === null) return;
+        window.addEventListener('mouseup', handleSetPressEnd);
+        return () => window.removeEventListener('mouseup', handleSetPressEnd);
+      }, [draggingSetIdx]);
 
       // 운동 화면 표시 중에는 화면이 꺼지지 않도록 Wake Lock 유지
       useEffect(() => {
@@ -2383,6 +2455,19 @@
         return currentEx.sets.reduce((sum, s) => sum + (s.completed ? s.weight * s.reps : 0), 0);
       }, [currentEx]);
 
+      // 맨몸 운동용: 총 횟수 / 최대 횟수(한 세트 기준)
+      const totalReps = useMemo(() => {
+        if (!currentEx) return 0;
+        return currentEx.sets.reduce((sum, s) => sum + (s.completed ? s.reps : 0), 0);
+      }, [currentEx]);
+
+      const maxSetReps = useMemo(() => {
+        if (!currentEx) return 0;
+        const completedSets = currentEx.sets.filter(s => s.completed && s.reps > 0);
+        if (completedSets.length === 0) return 0;
+        return Math.max(...completedSets.map(s => s.reps));
+      }, [currentEx]);
+
       // 최대 무게 세트 (완료된 세트 중 가장 무거운 무게)
       const bestSet = useMemo(() => {
         if (!currentEx) return { weight: 0, reps: 0 };
@@ -2406,10 +2491,11 @@
       // 이전 기록(가장 최근 다른 날짜) / 전체 최고 기록 - 최대무게·1RM·총볼륨 각각 계산
       const exerciseHistoryStats = useMemo(() => {
         const empty = {
-          prev: { weight: 0, reps: 0, oneRM: 0, volume: 0 },
-          best: { weight: 0, reps: 0, oneRM: 0, volume: 0 }
+          prev: { weight: 0, reps: 0, oneRM: 0, volume: 0, maxReps: 0, totalReps: 0 },
+          best: { weight: 0, reps: 0, oneRM: 0, volume: 0, maxReps: 0, totalReps: 0 }
         };
         if (!currentEx || !workoutLogs) return empty;
+        const isBW = currentEx.isBodyweight;
 
         const rows = [];
         Object.keys(workoutLogs).sort((a, b) => b.localeCompare(a)).forEach(date => {
@@ -2417,18 +2503,27 @@
           if (!log.exercises) return;
           const match = log.exercises.find(e => e.id === currentEx.id);
           if (!match) return;
-          const completedSets = (match.sets || []).filter(s => s.completed && s.weight > 0);
+          const completedSets = (match.sets || []).filter(s => s.completed && (isBW ? s.reps > 0 : s.weight > 0));
           if (completedSets.length === 0) return;
-          const bestOfDay = completedSets.reduce((b, s) => (s.weight > b.weight ? s : b), completedSets[0]);
-          const oneRMOfDay = completedSets.reduce((acc, s) => Math.max(acc, s.weight * (1 + s.reps / 30)), 0);
-          const volumeOfDay = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
-          rows.push({
-            date,
-            weight: bestOfDay.weight,
-            reps: bestOfDay.reps,
-            oneRM: Math.round(oneRMOfDay * 10) / 10,
-            volume: volumeOfDay
-          });
+
+          if (isBW) {
+            const maxRepsOfDay = Math.max(...completedSets.map(s => s.reps));
+            const totalRepsOfDay = completedSets.reduce((sum, s) => sum + s.reps, 0);
+            rows.push({ date, weight: 0, reps: maxRepsOfDay, oneRM: 0, volume: 0, maxReps: maxRepsOfDay, totalReps: totalRepsOfDay });
+          } else {
+            const bestOfDay = completedSets.reduce((b, s) => (s.weight > b.weight ? s : b), completedSets[0]);
+            const oneRMOfDay = completedSets.reduce((acc, s) => Math.max(acc, s.weight * (1 + s.reps / 30)), 0);
+            const volumeOfDay = completedSets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+            rows.push({
+              date,
+              weight: bestOfDay.weight,
+              reps: bestOfDay.reps,
+              oneRM: Math.round(oneRMOfDay * 10) / 10,
+              volume: volumeOfDay,
+              maxReps: 0,
+              totalReps: 0
+            });
+          }
         });
 
         if (rows.length === 0) return empty;
@@ -2441,8 +2536,10 @@
           weight: r.weight > acc.weight ? r.weight : acc.weight,
           reps: r.weight > acc.weight ? r.reps : acc.reps,
           oneRM: Math.max(acc.oneRM, r.oneRM),
-          volume: Math.max(acc.volume, r.volume)
-        }), { weight: 0, reps: 0, oneRM: 0, volume: 0 });
+          volume: Math.max(acc.volume, r.volume),
+          maxReps: Math.max(acc.maxReps, r.maxReps),
+          totalReps: Math.max(acc.totalReps, r.totalReps)
+        }), { weight: 0, reps: 0, oneRM: 0, volume: 0, maxReps: 0, totalReps: 0 });
 
         return { prev: prevRow, best };
       }, [currentEx, workoutLogs, activeSession.date]);
@@ -2537,77 +2634,132 @@
                 </div>
               </div>
 
+              <button
+                onClick={() => onToggleBodyweight(currentExIndex)}
+                className="mt-2 inline-flex items-center bg-[#1E1E1E] border border-gray-700 rounded-lg overflow-hidden text-[10px] font-bold"
+              >
+                <span className={`px-2.5 py-1 ${!currentEx.isBodyweight ? 'bg-blue-600 text-white' : 'text-gray-400'}`}>무게 운동</span>
+                <span className={`px-2.5 py-1 ${currentEx.isBodyweight ? 'bg-blue-600 text-white' : 'text-gray-400'}`}>맨몸 운동(횟수)</span>
+              </button>
+
               <div className="grid grid-cols-3 gap-2 mt-3 bg-[#1E1E1E] p-3 rounded-xl border border-gray-800">
-                <div>
-                  <div className="text-[10px] text-gray-400">최대 무게</div>
-                  <div className="text-sm font-bold text-gray-100">
-                    {bestSet.weight > 0 ? `${bestSet.weight} x ${bestSet.reps}` : '-'}
-                  </div>
-                  {exerciseHistoryStats.prev.weight > 0 && (
-                    <div className="text-[9px] text-gray-500 mt-0.5">
-                      이전 {exerciseHistoryStats.prev.weight} x {exerciseHistoryStats.prev.reps}
-                      {renderTrend(bestSet.weight, exerciseHistoryStats.prev.weight)}
+                {currentEx.isBodyweight ? (
+                  <>
+                    <div>
+                      <div className="text-[10px] text-gray-400">최대 횟수</div>
+                      <div className="text-sm font-bold text-gray-100">{maxSetReps > 0 ? `${maxSetReps}회` : '-'}</div>
+                      {exerciseHistoryStats.prev.maxReps > 0 && (
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          이전 {exerciseHistoryStats.prev.maxReps}회
+                          {renderTrend(maxSetReps, exerciseHistoryStats.prev.maxReps)}
+                        </div>
+                      )}
+                      {exerciseHistoryStats.best.maxReps > 0 && (
+                        <div className="text-[9px] text-gray-500">
+                          최고 {exerciseHistoryStats.best.maxReps}회
+                          {renderBestDot(maxSetReps, exerciseHistoryStats.best.maxReps)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {exerciseHistoryStats.best.weight > 0 && (
-                    <div className="text-[9px] text-gray-500">
-                      최고 {exerciseHistoryStats.best.weight} x {exerciseHistoryStats.best.reps}
-                      {renderBestDot(bestSet.weight, exerciseHistoryStats.best.weight)}
+                    <div>
+                      <div className="text-[10px] text-gray-400">완료 세트</div>
+                      <div className="text-sm font-bold text-blue-400">
+                        {currentEx.sets.filter(s => s.completed).length} / {currentEx.sets.length}
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-[10px] text-gray-400">추정 1RM</div>
-                  <div className="text-sm font-bold text-blue-400">{estimated1RM > 0 ? `${estimated1RM} kg` : '-'}</div>
-                  {exerciseHistoryStats.prev.oneRM > 0 && (
-                    <div className="text-[9px] text-gray-500 mt-0.5">
-                      이전 {exerciseHistoryStats.prev.oneRM}kg
-                      {renderTrend(estimated1RM, exerciseHistoryStats.prev.oneRM)}
+                    <div>
+                      <div className="text-[10px] text-gray-400">총 횟수</div>
+                      <div className="text-sm font-bold text-gray-100">{totalReps}회</div>
+                      {exerciseHistoryStats.prev.totalReps > 0 && (
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          이전 {exerciseHistoryStats.prev.totalReps}회
+                          {renderTrend(totalReps, exerciseHistoryStats.prev.totalReps)}
+                        </div>
+                      )}
+                      {exerciseHistoryStats.best.totalReps > 0 && (
+                        <div className="text-[9px] text-gray-500">
+                          최고 {exerciseHistoryStats.best.totalReps}회
+                          {renderBestDot(totalReps, exerciseHistoryStats.best.totalReps)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {exerciseHistoryStats.best.oneRM > 0 && (
-                    <div className="text-[9px] text-gray-500">
-                      최고 {exerciseHistoryStats.best.oneRM}kg
-                      {renderBestDot(estimated1RM, exerciseHistoryStats.best.oneRM)}
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <div className="text-[10px] text-gray-400">최대 무게</div>
+                      <div className="text-sm font-bold text-gray-100">
+                        {bestSet.weight > 0 ? `${bestSet.weight} x ${bestSet.reps}` : '-'}
+                      </div>
+                      {exerciseHistoryStats.prev.weight > 0 && (
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          이전 {exerciseHistoryStats.prev.weight} x {exerciseHistoryStats.prev.reps}
+                          {renderTrend(bestSet.weight, exerciseHistoryStats.prev.weight)}
+                        </div>
+                      )}
+                      {exerciseHistoryStats.best.weight > 0 && (
+                        <div className="text-[9px] text-gray-500">
+                          최고 {exerciseHistoryStats.best.weight} x {exerciseHistoryStats.best.reps}
+                          {renderBestDot(bestSet.weight, exerciseHistoryStats.best.weight)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-[10px] text-gray-400">총 볼륨</div>
-                  <div className="text-sm font-bold text-gray-100">{totalVolume} kg</div>
-                  {exerciseHistoryStats.prev.volume > 0 && (
-                    <div className="text-[9px] text-gray-500 mt-0.5">
-                      이전 {exerciseHistoryStats.prev.volume}kg
-                      {renderTrend(totalVolume, exerciseHistoryStats.prev.volume)}
+                    <div>
+                      <div className="text-[10px] text-gray-400">추정 1RM</div>
+                      <div className="text-sm font-bold text-blue-400">{estimated1RM > 0 ? `${estimated1RM} kg` : '-'}</div>
+                      {exerciseHistoryStats.prev.oneRM > 0 && (
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          이전 {exerciseHistoryStats.prev.oneRM}kg
+                          {renderTrend(estimated1RM, exerciseHistoryStats.prev.oneRM)}
+                        </div>
+                      )}
+                      {exerciseHistoryStats.best.oneRM > 0 && (
+                        <div className="text-[9px] text-gray-500">
+                          최고 {exerciseHistoryStats.best.oneRM}kg
+                          {renderBestDot(estimated1RM, exerciseHistoryStats.best.oneRM)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {exerciseHistoryStats.best.volume > 0 && (
-                    <div className="text-[9px] text-gray-500">
-                      최고 {exerciseHistoryStats.best.volume}kg
-                      {renderBestDot(totalVolume, exerciseHistoryStats.best.volume)}
+                    <div>
+                      <div className="text-[10px] text-gray-400">총 볼륨</div>
+                      <div className="text-sm font-bold text-gray-100">{totalVolume} kg</div>
+                      {exerciseHistoryStats.prev.volume > 0 && (
+                        <div className="text-[9px] text-gray-500 mt-0.5">
+                          이전 {exerciseHistoryStats.prev.volume}kg
+                          {renderTrend(totalVolume, exerciseHistoryStats.prev.volume)}
+                        </div>
+                      )}
+                      {exerciseHistoryStats.best.volume > 0 && (
+                        <div className="text-[9px] text-gray-500">
+                          최고 {exerciseHistoryStats.best.volume}kg
+                          {renderBestDot(totalVolume, exerciseHistoryStats.best.volume)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </>
+                )}
               </div>
             </div>
 
             {/* 세트 리스트 (+5 / -5, +1 / -1, 세트 원버튼 삭제, 길게 눌러 드래그로 순서 변경) */}
             <div className="flex items-center justify-between px-0.5">
               <span className="text-[10px] text-gray-500">👆 세트를 길게 눌러 드래그하면 순서를 바꿀 수 있어요</span>
-              <div className="flex items-center bg-[#1E1E1E] border border-gray-700 rounded-lg overflow-hidden flex-shrink-0 ml-2">
-                <button
-                  onClick={() => setWeightUnit('kg')}
-                  className={`px-2 py-1 text-[10px] font-bold ${weightUnit === 'kg' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
-                >
-                  kg
-                </button>
-                <button
-                  onClick={() => setWeightUnit('lb')}
-                  className={`px-2 py-1 text-[10px] font-bold ${weightUnit === 'lb' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
-                >
-                  lb
-                </button>
-              </div>
+              {!currentEx.isBodyweight && (
+                <div className="flex items-center bg-[#1E1E1E] border border-gray-700 rounded-lg overflow-hidden flex-shrink-0 ml-2">
+                  <button
+                    onClick={() => setWeightUnit('kg')}
+                    className={`px-2 py-1 text-[10px] font-bold ${weightUnit === 'kg' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+                  >
+                    kg
+                  </button>
+                  <button
+                    onClick={() => setWeightUnit('lb')}
+                    className={`px-2 py-1 text-[10px] font-bold ${weightUnit === 'lb' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+                  >
+                    lb
+                  </button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               {currentEx.sets.map((set, setIdx) => (
@@ -2618,8 +2770,8 @@
                   onTouchMove={handleSetTouchMove}
                   onTouchEnd={handleSetPressEnd}
                   onMouseDown={() => handleSetPressStart(setIdx)}
+                  onMouseMove={handleSetMouseMove}
                   onMouseUp={handleSetPressEnd}
-                  onMouseLeave={handleSetPressEnd}
                   className={`p-2.5 rounded-xl border flex items-center justify-between transition-all ${
                     set.completed ? 'bg-[#18261E] border-green-800/60' : 'bg-[#1E1E1E] border-gray-800'
                   } ${draggingSetIdx === setIdx ? 'opacity-40 scale-[0.98]' : ''} ${
@@ -2644,33 +2796,35 @@
 
                   {/* 수치 표시 영역 (터치하여 직접 입력 가능, 입력은 kg/lb 단위 전환 가능 · 평상시 표시는 항상 kg) */}
                   <div className="flex items-center space-x-2">
-                    <div className="text-center min-w-[42px]">
-                      {editingField && editingField.setIdx === setIdx && editingField.field === 'weight' ? (
-                        <input
-                          type="number"
-                          autoFocus
-                          value={editingValue}
-                          onChange={(e) => setEditingValue(e.target.value)}
-                          onBlur={() => {
-                            const kgValue = weightInputToKg(editingValue);
-                            if (kgValue !== null) handleSetFieldDirect(currentExIndex, setIdx, 'weight', kgValue);
-                            setEditingField(null);
-                          }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
-                          className="w-12 bg-[#121212] border border-blue-500 rounded text-center text-sm font-bold text-white font-mono py-0.5"
-                        />
-                      ) : (
-                        <span
-                          onClick={() => { setEditingField({ setIdx, field: 'weight' }); setEditingValue(String(weightToDisplay(set.weight))); }}
-                          className="text-sm font-bold text-white font-mono cursor-pointer border-b border-dashed border-gray-600"
-                        >
-                          {set.weight}
+                    {!currentEx.isBodyweight && (
+                      <div className="text-center min-w-[42px]">
+                        {editingField && editingField.setIdx === setIdx && editingField.field === 'weight' ? (
+                          <input
+                            type="number"
+                            autoFocus
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={() => {
+                              const kgValue = weightInputToKg(editingValue);
+                              if (kgValue !== null) handleSetFieldDirect(currentExIndex, setIdx, 'weight', kgValue);
+                              setEditingField(null);
+                            }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                            className="w-12 bg-[#121212] border border-blue-500 rounded text-center text-sm font-bold text-white font-mono py-0.5"
+                          />
+                        ) : (
+                          <span
+                            onClick={() => { setEditingField({ setIdx, field: 'weight' }); setEditingValue(String(weightToDisplay(set.weight))); }}
+                            className="text-sm font-bold text-white font-mono cursor-pointer border-b border-dashed border-gray-600"
+                          >
+                            {set.weight}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-gray-400 ml-0.5">
+                          {editingField && editingField.setIdx === setIdx && editingField.field === 'weight' ? weightUnit : 'kg'}
                         </span>
-                      )}
-                      <span className="text-[10px] text-gray-400 ml-0.5">
-                        {editingField && editingField.setIdx === setIdx && editingField.field === 'weight' ? weightUnit : 'kg'}
-                      </span>
-                    </div>
+                      </div>
+                    )}
                     <div className="text-center min-w-[32px]">
                       {editingField && editingField.setIdx === setIdx && editingField.field === 'reps' ? (
                         <input
@@ -2685,7 +2839,7 @@
                       ) : (
                         <span
                           onClick={() => { setEditingField({ setIdx, field: 'reps' }); setEditingValue(String(set.reps)); }}
-                          className="text-sm font-bold text-white font-mono cursor-pointer border-b border-dashed border-gray-600"
+                          className={`font-bold text-white font-mono cursor-pointer border-b border-dashed border-gray-600 ${currentEx.isBodyweight ? 'text-lg' : 'text-sm'}`}
                         >
                           {set.reps}
                         </span>
@@ -2696,21 +2850,23 @@
 
                   {/* 미세 조절 버튼군 (-5, +5, -1, +1, 삭제) */}
                   <div className="flex items-center space-x-1">
-                    {/* 무게 -5 / +5 (현재 선택된 kg/lb 단위 기준으로 증감) */}
-                    <div className="flex flex-col space-y-0.5">
-                      <button 
-                        onClick={() => adjustWeightByUnit(setIdx, 5)}
-                        className="px-1.5 py-0.5 bg-gray-800 text-[9px] text-blue-400 font-bold rounded hover:bg-gray-700 active:scale-95"
-                      >
-                        +5
-                      </button>
-                      <button 
-                        onClick={() => adjustWeightByUnit(setIdx, -5)}
-                        className="px-1.5 py-0.5 bg-gray-800 text-[9px] text-red-400 font-bold rounded hover:bg-gray-700 active:scale-95"
-                      >
-                        -5
-                      </button>
-                    </div>
+                    {/* 무게 -5 / +5 (현재 선택된 kg/lb 단위 기준으로 증감, 맨몸 운동에서는 숨김) */}
+                    {!currentEx.isBodyweight && (
+                      <div className="flex flex-col space-y-0.5">
+                        <button 
+                          onClick={() => adjustWeightByUnit(setIdx, 5)}
+                          className="px-1.5 py-0.5 bg-gray-800 text-[9px] text-blue-400 font-bold rounded hover:bg-gray-700 active:scale-95"
+                        >
+                          +5
+                        </button>
+                        <button 
+                          onClick={() => adjustWeightByUnit(setIdx, -5)}
+                          className="px-1.5 py-0.5 bg-gray-800 text-[9px] text-red-400 font-bold rounded hover:bg-gray-700 active:scale-95"
+                        >
+                          -5
+                        </button>
+                      </div>
+                    )}
 
                     {/* 횟수 -1 / +1 */}
                     <div className="flex flex-col space-y-0.5">
